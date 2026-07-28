@@ -167,7 +167,6 @@ input[type="range"]::-ms-fill-upper {
   background-color: rgba(146, 255, 242, 0.1) !important;
 }
 
-/* Never invert picture or media elements */
 img,
 picture,
 video,
