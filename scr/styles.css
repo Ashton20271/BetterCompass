@@ -10,19 +10,19 @@ body,
 *:after,
 strong,
 b {
-  color: #0a2342 !important;
+  color: #a7ceff !important;
 }
 
 html {
   filter: invert(1) hue-rotate(180deg);
   background: #0e1621;
-  color: #0a2342;
+  color: #a7ceff;
 }
 
 body,
 html,
 * {
-  color: #a7ceff !important;
+  color: #0a2342 !important;
 }
 
 img,
@@ -138,13 +138,13 @@ input[type="range"]::-ms-fill-upper {
 .MuiStack-root.css-jxo36b {
   filter: none !important;
   background-color: #0e1621 !important;
-  color: #0a2342 !important;
+  color: #67acff !important;
 }
 
 .MuiStack-root.css-jxo36b .MuiPaper-root {
   filter: none !important;
   background-color: #000000 !important;
-  color: #5d9eef !important;
+  color: #75b3ff !important;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -165,4 +165,13 @@ input[type="range"]::-ms-fill-upper {
 
 .MuiStack-root.css-jxo36b .MuiDivider-root {
   background-color: rgba(146, 255, 242, 0.1) !important;
+}
+
+/* Never invert picture or media elements */
+img,
+picture,
+video,
+canvas,
+svg {
+  filter: none !important;
 }
