@@ -36,6 +36,32 @@
         background: #475569;
         color: #f8fafc;
       }
+      .field {
+        margin-top: 12px;
+        display: grid;
+        gap: 8px;
+      }
+      .field label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+      }
+      .field input[type="color"] {
+        width: 100%;
+        height: 34px;
+        border: none;
+        padding: 0;
+        background: transparent;
+        cursor: pointer;
+      }
+      .toggle-row {
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
       .hint {
         margin-top: 12px;
         font-size: 12px;
@@ -48,11 +74,29 @@
       <h1>Better Compass</h1>
       <button class="black" data-mode="black">Black Theme</button>
       <button class="off" data-mode="off">Default Theme</button>
-      <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+      <div class="field">
+        <label for="bgColor">Page background <input id="bgColor" type="color"></label>
+        <label for="textColor">Text color <input id="textColor" type="color"></label>
+        <label for="headerColor">Header background <input id="headerColor" type="color"></label>
+        <label for="headerTextColor">Header text <input id="headerTextColor" type="color"></label>
+        <label for="cardColor">Card background <input id="cardColor" type="color"></label>
+        <label for="cardTextColor">Card text <input id="cardTextColor" type="color"></label>
+        <label for="buttonColor">Button background <input id="buttonColor" type="color"></label>
+        <label for="buttonTextColor">Button text <input id="buttonTextColor" type="color"></label>
+        <label for="linkColor">Link color <input id="linkColor" type="color"></label>
+        <label for="borderColor">Border color <input id="borderColor" type="color"></label>
+        <label for="accentColor">Accent color <input id="accentColor" type="color"></label>
+        <button id="resetTheme" class="off" type="button">Reset theme</button>
+      </div>
+      <div class="toggle-row">
         <input id="autoLogin" type="checkbox">
         <label for="autoLogin">Auto login (SAML)</label>
       </div>
-      <div class="hint">Select a theme to apply in the page.</div>
+      <div class="toggle-row">
+        <input id="timetableColors" type="checkbox">
+        <label for="timetableColors">Enable timetable colors</label>
+      </div>
+      <div class="hint">Customize major page colors, then refresh the site if needed.</div>
     </div>
     <script src="popup.js"></script>
   </body>

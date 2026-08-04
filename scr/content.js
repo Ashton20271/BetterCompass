@@ -23,6 +23,22 @@
 
   const TIMETABLE_COLORS_KEY = "compass-timetable-colors-enabled";
   let timetableColorsEnabled = true;
+  const THEME_COLOR_KEYS = {
+    bgColor: "compass-theme-bg",
+    textColor: "compass-theme-text",
+    headerColor: "compass-theme-header",
+    headerTextColor: "compass-theme-header-text",
+    cardColor: "compass-theme-card",
+    cardTextColor: "compass-theme-card-text",
+    buttonColor: "compass-theme-button",
+    buttonTextColor: "compass-theme-button-text",
+    linkColor: "compass-theme-link",
+    borderColor: "compass-theme-border",
+    accentColor: "compass-theme-accent",
+  };
+  const themeStyle = document.createElement("style");
+  themeStyle.id = "compass-theme-overrides";
+  document.head ? document.head.appendChild(themeStyle) : document.documentElement.appendChild(themeStyle);
 
   function resetNewsStyles() {
     document.querySelectorAll(".MuiStack-root").forEach(stack => {
@@ -48,7 +64,6 @@
   }
 
   function restore(root = document) {
-  
     if (!root || typeof root.querySelectorAll !== 'function') return;
 
     root
@@ -79,6 +94,7 @@
     }
 
     restore();
+    applyCustomTheme();
   }
 
   applyMode(mode);
@@ -98,6 +114,15 @@
     }
     if (changes["compass-timetable-colors-enabled"]) {
       updateTimetableColorsEnabled(!!changes["compass-timetable-colors-enabled"].newValue);
+    }
+    if (Object.values(THEME_COLOR_KEYS).some(key => key in changes)) {
+      applyCustomTheme();
+    }
+  });
+
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message && message.action === 'applyCustomTheme') {
+      applyCustomTheme();
     }
   });
 
@@ -325,6 +350,46 @@
     restore();
   }
 
+  function applyCustomTheme() {
+    chrome.storage.local.get(Object.values(THEME_COLOR_KEYS), result => {
+      const styles = [];
+      if (result[THEME_COLOR_KEYS.bgColor]) {
+        styles.push(`html, body, body > div, .MuiPaper-root, .MuiCard-root, .MuiStack-root, .MuiToolbar-root, .MuiAppBar-root, [class*="background"], [class*="bg"] { background-color: ${result[THEME_COLOR_KEYS.bgColor]} !important; }`);
+      }
+      if (result[THEME_COLOR_KEYS.textColor]) {
+        styles.push(`html, body, body *, body *::before, body *::after, .MuiTypography-root, .MuiButton-root, .MuiInputBase-root, .MuiTab-root, .MuiChip-root, .MuiList-root, .MuiCard-root * { color: ${result[THEME_COLOR_KEYS.textColor]} !important; }`);
+      }
+      if (result[THEME_COLOR_KEYS.headerColor]) {
+        styles.push(`.MuiToolbar-root, .MuiAppBar-root, [class*="header"], [class*="topbar"], [class*="navbar"], [class*="toolbar"] { background-color: ${result[THEME_COLOR_KEYS.headerColor]} !important; }`);
+      }
+      if (result[THEME_COLOR_KEYS.headerTextColor]) {
+        styles.push(`.MuiToolbar-root, .MuiAppBar-root, [class*="header"], [class*="topbar"], [class*="navbar"], [class*="toolbar"], .MuiToolbar-root *, .MuiAppBar-root * { color: ${result[THEME_COLOR_KEYS.headerTextColor]} !important; }`);
+      }
+      if (result[THEME_COLOR_KEYS.cardColor]) {
+        styles.push(`.MuiPaper-root, .MuiCard-root, .MuiStack-root, .MuiList-root, [class*="card"], [class*="panel"], [class*="surface"], [class*="tile"], [class*="box"] { background-color: ${result[THEME_COLOR_KEYS.cardColor]} !important; }`);
+      }
+      if (result[THEME_COLOR_KEYS.cardTextColor]) {
+        styles.push(`.MuiPaper-root, .MuiCard-root, .MuiStack-root, .MuiList-root, [class*="card"], [class*="panel"], [class*="surface"], [class*="tile"], [class*="box"], .MuiPaper-root *, .MuiCard-root *, .MuiStack-root * { color: ${result[THEME_COLOR_KEYS.cardTextColor]} !important; }`);
+      }
+      if (result[THEME_COLOR_KEYS.buttonColor]) {
+        styles.push(`.MuiButton-root, button, input[type="button"], input[type="submit"], .MuiButtonBase-root, .MuiFab-root { background-color: ${result[THEME_COLOR_KEYS.buttonColor]} !important; }`);
+      }
+      if (result[THEME_COLOR_KEYS.buttonTextColor]) {
+        styles.push(`.MuiButton-root, button, input[type="button"], input[type="submit"], .MuiButtonBase-root, .MuiFab-root, .MuiButton-root * { color: ${result[THEME_COLOR_KEYS.buttonTextColor]} !important; }`);
+      }
+      if (result[THEME_COLOR_KEYS.linkColor]) {
+        styles.push(`a, a *, .MuiLink-root, .MuiButton-root, .MuiTabs-root, [class*="link"], [class*="anchor"] { color: ${result[THEME_COLOR_KEYS.linkColor]} !important; }`);
+      }
+      if (result[THEME_COLOR_KEYS.borderColor]) {
+        styles.push(`* { border-color: ${result[THEME_COLOR_KEYS.borderColor]} !important; }`);
+      }
+      if (result[THEME_COLOR_KEYS.accentColor]) {
+        styles.push(`.MuiChip-root, .MuiBadge-root, .MuiAvatar-root, .MuiIconButton-root, [class*="accent"], [class*="highlight"] { background-color: ${result[THEME_COLOR_KEYS.accentColor]} !important; }`);
+      }
+      themeStyle.textContent = styles.join("\n");
+    });
+  }
+
   chrome.storage.local.get(AUTO_LOGIN_KEY, result => {
     const stored = result.hasOwnProperty(AUTO_LOGIN_KEY)
       ? result[AUTO_LOGIN_KEY]
@@ -338,5 +403,7 @@
       : true;
     updateTimetableColorsEnabled(stored);
   });
+
+  applyCustomTheme();
 
 })();
