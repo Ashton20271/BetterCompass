@@ -1,50 +1,109 @@
 (function () {
   const INVERT_KEY = "compass-invert-enabled";
+  const MODE_KEY = "compass-mode";
+  const DEFAULT_MODE = "black";
 
-  const inverted = localStorage.getItem(INVERT_KEY) !== "false";
-
-  function applyInvert(state) {
-    document.documentElement.style.filter = state
-      ? "invert(1) hue-rotate(180deg)"
-      : "none";
+  let mode = localStorage.getItem(MODE_KEY);
+  if (!mode) {
+    const inverted = localStorage.getItem(INVERT_KEY);
+    mode = inverted === "false" ? "off" : DEFAULT_MODE;
   }
 
-  applyInvert(inverted);
+  function applyMode(value) {
+    document.documentElement.classList.remove("compass-mode-black");
 
-  const toggle = document.createElement("button");
-  toggle.textContent = inverted ? "Light Mode" : "Dark Mode";
-  toggle.style.cssText = `
-    position: fixed;
-    bottom: 16px;
-    right: 16px;
-    z-index: 99999;
-    background:#1f2937;
-    color:white;
-    border:none;
-    padding:8px 12px;
-    border-radius:6px;
-    font-size:12px;
-    cursor:pointer;
-  `;
-  document.body.appendChild(toggle);
-
-  toggle.onclick = () => {
-    const now = document.documentElement.style.filter === "none";
-    applyInvert(now);
-    localStorage.setItem(INVERT_KEY, now);
-    toggle.textContent = now ? "Light Mode" : "Dark Mode";
-  };
-
-  const style = document.createElement("style");
-  style.textContent = `
-    img, video, canvas, svg {
-      filter:invert(1) hue-rotate(180deg);
+    if (value === "black") {
+      document.documentElement.classList.add("compass-mode-black");
     }
-  `;
-  document.head.appendChild(style);
+  }
 
+  function isActive() {
+    return mode !== "off";
+  }
+
+  const TIMETABLE_COLORS_KEY = "compass-timetable-colors-enabled";
+  let timetableColorsEnabled = true;
+
+  function resetNewsStyles() {
+    document.querySelectorAll(".MuiStack-root").forEach(stack => {
+      stack.style.filter = "";
+      stack.style.backgroundColor = "";
+      stack.style.color = "";
+
+      stack.querySelectorAll(".MuiPaper-root").forEach(card => {
+        card.style.filter = "";
+        card.style.backgroundColor = "";
+        card.style.color = "";
+        card.style.border = "";
+      });
+
+      stack.querySelectorAll(".MuiDivider-root").forEach(div => {
+        div.style.backgroundColor = "";
+      });
+
+      stack.querySelectorAll("*").forEach(el => {
+        el.style.filter = "";
+      });
+    });
+  }
+
+  function restore(root = document) {
+  
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+
+    root
+      .querySelectorAll('[class*="timetable"],[class*="calendar"],.event')
+      .forEach(el => {
+        const key = getKey(el);
+        const color = key && localStorage.getItem(key);
+        if (isActive() && color && timetableColorsEnabled) {
+          el.style.backgroundColor = color;
+        } else {
+          el.style.backgroundColor = "";
+        }
+      });
+  }
+
+  function setMode(value) {
+    mode = value;
+    localStorage.setItem(MODE_KEY, value);
+
+    if (value === "off") {
+      document.documentElement.classList.remove("compass-mode-black");
+      resetNewsStyles();
+    } else {
+      applyMode(value);
+      if (value === "black") {
+        fixNews();
+      }
+    }
+
+    restore();
+  }
+
+  applyMode(mode);
+
+  chrome.storage.local.get(MODE_KEY, result => {
+    const stored = result[MODE_KEY] || mode;
+    setMode(stored);
+  });
+
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local") return;
+    if (changes[MODE_KEY]) {
+      setMode(changes[MODE_KEY].newValue);
+    }
+    if (changes["compass-auto-login-enabled"]) {
+      updateAutoLoginEnabled(!!changes["compass-auto-login-enabled"].newValue);
+    }
+    if (changes["compass-timetable-colors-enabled"]) {
+      updateTimetableColorsEnabled(!!changes["compass-timetable-colors-enabled"].newValue);
+    }
+  });
 
   function fixNews() {
+    if (mode !== "black") return;
+
     document.querySelectorAll(".MuiStack-root").forEach(stack => {
       if (!stack.innerText.includes("News")) return;
 
@@ -74,9 +133,9 @@
   setTimeout(fixNews, 1000);
   setTimeout(fixNews, 2500);
 
-  new MutationObserver(fixNews).observe(document.body, {
+  new MutationObserver(() => fixNews()).observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
   });
 
   const picker = document.createElement("div");
@@ -194,18 +253,8 @@
 
   picker.addEventListener("pointerdown", e => e.stopPropagation());
 
-  function restore(root = document) {
-    root
-      .querySelectorAll('[class*="timetable"],[class*="calendar"],.event')
-      .forEach(el => {
-        const key = getKey(el);
-        const color = key && localStorage.getItem(key);
-        if (color) el.style.backgroundColor = color;
-      });
-  }
-
   restore();
-  window.addEventListener("load", restore);
+  window.addEventListener("load", () => restore());
 
   new MutationObserver(muts => {
     muts.forEach(m =>
@@ -213,36 +262,81 @@
     );
   }).observe(document.body, { childList: true, subtree: true });
 
-  function autoClickLoginButton() {
+  const AUTO_LOGIN_KEY = "compass-auto-login-enabled";
+  let autoLoginEnabled = true;
+  let autoLoginObserver = null;
+  let autoLoginTimeoutId = null;
+
+  function tryClickLoginButton() {
     const loginButton = document.getElementById('SamlLoginButton');
     if (loginButton) {
       loginButton.click();
       console.log('SAML Sign-in button clicked automatically.');
-    } else {
-      console.log('SAML Sign-in button not found.');
+      return true;
     }
+    return false;
   }
 
-  window.addEventListener('load', autoClickLoginButton);
+  function startAutoLogin() {
+    if (!autoLoginEnabled) return;
 
-  setTimeout(autoClickLoginButton, 5000);
+    tryClickLoginButton();
+    autoLoginTimeoutId = setTimeout(tryClickLoginButton, 5000);
 
-  function observeAndClickLoginButton() {
-    const observer = new MutationObserver(() => {
-      const loginButton = document.getElementById('SamlLoginButton');
-      if (loginButton) {
-        loginButton.click();
-        observer.disconnect();
+    if (autoLoginObserver) {
+      autoLoginObserver.disconnect();
+      autoLoginObserver = null;
+    }
+
+    autoLoginObserver = new MutationObserver(() => {
+      const clicked = tryClickLoginButton();
+      if (clicked && autoLoginObserver) {
+        autoLoginObserver.disconnect();
+        autoLoginObserver = null;
         console.log('SAML Sign-in button clicked via MutationObserver.');
       }
     });
 
-    observer.observe(document.body, {
+    autoLoginObserver.observe(document.body, {
       childList: true,
       subtree: true,
     });
   }
 
-  observeAndClickLoginButton();
+  function stopAutoLogin() {
+    if (autoLoginObserver) {
+      autoLoginObserver.disconnect();
+      autoLoginObserver = null;
+    }
+    if (autoLoginTimeoutId) {
+      clearTimeout(autoLoginTimeoutId);
+      autoLoginTimeoutId = null;
+    }
+  }
+
+  function updateAutoLoginEnabled(value) {
+    autoLoginEnabled = !!value;
+    if (autoLoginEnabled) startAutoLogin();
+    else stopAutoLogin();
+  }
+
+  function updateTimetableColorsEnabled(value) {
+    timetableColorsEnabled = !!value;
+    restore();
+  }
+
+  chrome.storage.local.get(AUTO_LOGIN_KEY, result => {
+    const stored = result.hasOwnProperty(AUTO_LOGIN_KEY)
+      ? result[AUTO_LOGIN_KEY]
+      : true;
+    updateAutoLoginEnabled(stored);
+  });
+
+  chrome.storage.local.get(TIMETABLE_COLORS_KEY, result => {
+    const stored = result.hasOwnProperty(TIMETABLE_COLORS_KEY)
+      ? result[TIMETABLE_COLORS_KEY]
+      : true;
+    updateTimetableColorsEnabled(stored);
+  });
 
 })();

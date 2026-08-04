@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Better Compass</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #111827;
+        color: #f8fafc;
+        width: 220px;
+      }
+      .popup {
+        padding: 16px;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 16px;
+      }
+      button {
+        width: 100%;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      button.black {
+        background: #0f172a;
+        color: #f8fafc;
+      }
+      button.off {
+        background: #475569;
+        color: #f8fafc;
+      }
+      .hint {
+        margin-top: 12px;
+        font-size: 12px;
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="popup">
+      <h1>Better Compass</h1>
+      <button class="black" data-mode="black">Black Theme</button>
+      <button class="off" data-mode="off">Default Theme</button>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+        <input id="autoLogin" type="checkbox">
+        <label for="autoLogin">Auto login (SAML)</label>
+      </div>
+      <div class="hint">Select a theme to apply in the page.</div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

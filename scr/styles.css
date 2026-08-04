@@ -1,176 +1,177 @@
-.MuiBox-root.css-70qvj9,
-.MuiBox-root.css-ecsxz {
+html.compass-mode-black .MuiBox-root.css-70qvj9,
+html.compass-mode-black .MuiBox-root.css-ecsxz {
   filter: none !important;
 }
 
-html,
-body,
-*,
-*:before,
-*:after,
-strong,
-b {
+html.compass-mode-black,
+html.compass-mode-black body,
+html.compass-mode-black *,
+html.compass-mode-black *:before,
+html.compass-mode-black *:after,
+html.compass-mode-black strong,
+html.compass-mode-black b {
   color: #a7ceff !important;
 }
 
-html {
+html.compass-mode-black {
   filter: invert(1) hue-rotate(180deg);
   background: #0e1621;
   color: #a7ceff;
 }
 
-body,
-html,
-* {
+html.compass-mode-black body,
+html.compass-mode-black html,
+html.compass-mode-black * {
   color: #0a2342 !important;
 }
 
-img,
-video,
-canvas,
-svg {
+html.compass-mode-black img,
+html.compass-mode-black video,
+html.compass-mode-black canvas,
+html.compass-mode-black svg {
   filter: invert(1) hue-rotate(180deg);
 }
 
-.timetable-class,
-[class*="timetable"],
-[class*="calendar"] {
+html.compass-mode-black .timetable-class,
+html.compass-mode-black [class*="timetable"],
+html.compass-mode-black [class*="calendar"] {
   transition: background-color 0.2s ease;
 }
 
-[data-testid*="timetable"],
-[data-testid*="calendar"] {
+html.compass-mode-black [data-testid*="timetable"],
+html.compass-mode-black [data-testid*="calendar"] {
   filter: invert(1) hue-rotate(180deg) !important;
 }
 
-[class*="compass-day-calendar-day-bd-evt"] {
+html.compass-mode-black [class*="compass-day-calendar-day-bd-evt"] {
   filter: invert(1) hue-rotate(180deg) !important;
 }
 
-[class*="compass-day-calendar-day-bd-evt"] * {
+html.compass-mode-black [class*="compass-day-calendar-day-bd-evt"] * {
   filter: none !important;
 }
 
-.MuiBox-root {
+html.compass-mode-black .MuiBox-root {
   filter: invert(1) hue-rotate(180deg);
 }
 
-.teacherContainer__profileImage,
-.teacherContainer__profileImage img,
-.MuiAvatar-root,
-.MuiAvatar-root img,
-.MuiAvatar-img.css-1hy9t21,
-img[class*="avatar"],
-img[class*="Avatar"],
-img[class*="profile"],
-img[class*="Profile"],
-img[class*="user"],
-img[class*="User"],
-img[class*="teacher"],
-img[class*="Teacher"],
-img[src*="profile"],
-img[src*="avatar"],
-img[src*="user"],
-img[src*="teacher"] {
+html.compass-mode-black .teacherContainer__profileImage,
+html.compass-mode-black .teacherContainer__profileImage img,
+html.compass-mode-black .MuiAvatar-root,
+html.compass-mode-black .MuiAvatar-root img,
+html.compass-mode-black .MuiAvatar-img.css-1hy9t21,
+html.compass-mode-black img[class*="avatar"],
+html.compass-mode-black img[class*="Avatar"],
+html.compass-mode-black img[class*="profile"],
+html.compass-mode-black img[class*="Profile"],
+html.compass-mode-black img[class*="user"],
+html.compass-mode-black img[class*="User"],
+html.compass-mode-black img[class*="teacher"],
+html.compass-mode-black img[class*="Teacher"],
+html.compass-mode-black img[src*="profile"],
+html.compass-mode-black img[src*="avatar"],
+html.compass-mode-black img[src*="user"],
+html.compass-mode-black img[src*="teacher"] {
   filter: invert(1) hue-rotate(180deg) !important;
   border-radius: 50%;
 }
 
-.MuiStack-root.css-jxo36b {
+html.compass-mode-black .MuiStack-root.css-jxo36b {
   filter: none !important;
 }
 
-.MuiStack-root.css-jxo36b * {
+html.compass-mode-black .MuiStack-root.css-jxo36b * {
   filter: invert(1) hue-rotate(180deg) !important;
 }
 
-.logo-container {
+html.compass-mode-black .logo-container {
   isolation: isolate;
 }
 
-.home-schoolLogo {
+html.compass-mode-black .home-schoolLogo {
   filter: none !important;
 }
 
-input[type="range"] {
+html.compass-mode-black input[type="range"] {
   width: 100%;
   margin-bottom: 6px;
 }
 
-input[type="range"],
-input[type="range"]::-webkit-slider-thumb,
-input[type="range"]::-webkit-slider-runnable-track {
+html.compass-mode-black input[type="range"],
+html.compass-mode-black input[type="range"]::-webkit-slider-thumb,
+html.compass-mode-black input[type="range"]::-webkit-slider-runnable-track {
   color: #000000 !important;
   --text-color: #000000;
 }
 
-input[type="range"]::-ms-fill-lower,
-input[type="range"]::-ms-fill-upper {
+html.compass-mode-black input[type="range"]::-ms-fill-lower,
+html.compass-mode-black input[type="range"]::-ms-fill-upper {
   color: #000000 !important;
 }
 
-.MuiPaper-root.css-1utwtsr {
+html.compass-mode-black .MuiPaper-root.css-1utwtsr {
   filter: none !important;
 }
 
-.MuiPaper-root.css-1utwtsr * {
+html.compass-mode-black .MuiPaper-root.css-1utwtsr * {
   filter: invert(1) hue-rotate(180deg) !important;
 }
 
-.MuiStack-root.css-jxo36b .MuiPaper-root {
+html.compass-mode-black .MuiStack-root.css-jxo36b .MuiPaper-root {
   filter: none !important;
   background: #0e1621 !important;
 }
 
-.MuiStack-root.css-jxo36b .MuiPaper-root * {
+html.compass-mode-black .MuiStack-root.css-jxo36b .MuiPaper-root * {
   filter: invert(1) hue-rotate(180deg) !important;
 }
 
-.MuiStack-root.css-jxo36b .MuiDivider-root {
+html.compass-mode-black .MuiStack-root.css-jxo36b .MuiDivider-root {
   filter: invert(1) hue-rotate(180deg) !important;
   opacity: 0.3;
 }
 
-.MuiStack-root.css-jxo36b .MuiPaper-root {
+html.compass-mode-black .MuiStack-root.css-jxo36b .MuiPaper-root {
   border-radius: 12px;
 }
 
-.MuiStack-root.css-jxo36b {
+html.compass-mode-black .MuiStack-root.css-jxo36b {
   filter: none !important;
   background-color: #0e1621 !important;
   color: #67acff !important;
 }
 
-.MuiStack-root.css-jxo36b .MuiPaper-root {
+html.compass-mode-black .MuiStack-root.css-jxo36b .MuiPaper-root {
   filter: none !important;
   background-color: #000000 !important;
   color: #75b3ff !important;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.MuiStack-root.css-jxo36b *,
-.MuiStack-root.css-jxo36b strong,
-.MuiStack-root.css-jxo36b b {
+html.compass-mode-black .MuiStack-root.css-jxo36b *,
+html.compass-mode-black .MuiStack-root.css-jxo36b strong,
+html.compass-mode-black .MuiStack-root.css-jxo36b b {
   filter: none !important;
   color: #82baff !important;
 }
 
-.MuiStack-root.css-jxo36b .MuiTypography-colorTextSecondary {
+html.compass-mode-black .MuiStack-root.css-jxo36b .MuiTypography-colorTextSecondary {
   color: #7eb1ff !important;
 }
 
-.MuiStack-root.css-jxo36b a {
+html.compass-mode-black .MuiStack-root.css-jxo36b a {
   color: #4391f6 !important;
 }
 
-.MuiStack-root.css-jxo36b .MuiDivider-root {
+html.compass-mode-black .MuiStack-root.css-jxo36b .MuiDivider-root {
   background-color: rgba(146, 255, 242, 0.1) !important;
 }
 
-img,
-picture,
-video,
-canvas,
-svg {
+html.compass-mode-black img,
+html.compass-mode-black picture,
+html.compass-mode-black video,
+html.compass-mode-black canvas,
+html.compass-mode-black svg {
   filter: none !important;
 }
+

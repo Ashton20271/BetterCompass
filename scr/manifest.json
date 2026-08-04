@@ -19,5 +19,11 @@
       ]
     }
   ],
-  "permissions": []
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Better Compass"
+  },
+  "permissions": [
+    "storage"
+  ]
 }
