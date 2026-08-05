@@ -39,7 +39,12 @@ function resetThemeColors() {
 function notifyPage(message) {
   chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     if (!tabs || !tabs.length) return;
-    chrome.tabs.sendMessage(tabs[0].id, message, () => {});
+    const tab = tabs[0];
+    if (!tab.url || !/^https?:\/\/([^\/]+\.)?compass\.education\//.test(tab.url)) return;
+    chrome.tabs.sendMessage(tab.id, message, () => {
+      if (chrome.runtime.lastError) {
+      }
+    });
   });
 }
 
