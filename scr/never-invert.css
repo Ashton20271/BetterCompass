@@ -1,5 +1,9 @@
-/* Prevent dark-mode inversion for specific UI elements and avatar containers. */
 html.compass-mode-black :is(
+  img,
+  picture,
+  svg,
+  video,
+  canvas,
   .teacherContainer__profileImage,
   .teacherContainer__profileImage img,
   .MuiAvatar-root,
