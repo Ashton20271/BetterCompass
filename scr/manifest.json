@@ -18,7 +18,8 @@
         "content.js"
       ],
       "css": [
-        "styles.css"
+        "styles.css",
+        "never-invert.css"
       ]
     }
   ],

@@ -1,0 +1,28 @@
+/* Prevent dark-mode inversion for specific UI elements and avatar containers. */
+html.compass-mode-black :is(
+  .teacherContainer__profileImage,
+  .teacherContainer__profileImage img,
+  .MuiAvatar-root,
+  .MuiAvatar-root img,
+  .MuiAvatar-img.css-1hy9t21,
+  .MuiBox-root.css-70qvj9,
+  .MuiBox-root.css-70qvj9 *,
+  .MuiBox-root.css-ecsxz,
+  .MuiBox-root.css-ecsxz *,
+  .home-schoolLogo,
+  .home-schoolLogo *,
+  img[class*="avatar"],
+  img[class*="Avatar"],
+  img[class*="profile"],
+  img[class*="Profile"],
+  img[class*="user"],
+  img[class*="User"],
+  img[class*="teacher"],
+  img[class*="Teacher"],
+  img[src*="profile"],
+  img[src*="avatar"],
+  img[src*="user"],
+  img[src*="teacher"]
+) {
+  filter: invert(1) hue-rotate(180deg) !important;
+}

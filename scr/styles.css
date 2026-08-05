@@ -55,27 +55,6 @@ html.compass-mode-black .MuiBox-root {
   filter: invert(1) hue-rotate(180deg);
 }
 
-html.compass-mode-black .teacherContainer__profileImage,
-html.compass-mode-black .teacherContainer__profileImage img,
-html.compass-mode-black .MuiAvatar-root,
-html.compass-mode-black .MuiAvatar-root img,
-html.compass-mode-black .MuiAvatar-img.css-1hy9t21,
-html.compass-mode-black img[class*="avatar"],
-html.compass-mode-black img[class*="Avatar"],
-html.compass-mode-black img[class*="profile"],
-html.compass-mode-black img[class*="Profile"],
-html.compass-mode-black img[class*="user"],
-html.compass-mode-black img[class*="User"],
-html.compass-mode-black img[class*="teacher"],
-html.compass-mode-black img[class*="Teacher"],
-html.compass-mode-black img[src*="profile"],
-html.compass-mode-black img[src*="avatar"],
-html.compass-mode-black img[src*="user"],
-html.compass-mode-black img[src*="teacher"] {
-  filter: invert(1) hue-rotate(180deg) !important;
-  border-radius: 50%;
-}
-
 html.compass-mode-black .MuiStack-root.css-jxo36b {
   filter: none !important;
 }
