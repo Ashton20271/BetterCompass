@@ -96,6 +96,15 @@
         <input id="timetableColors" type="checkbox">
         <label for="timetableColors">Enable timetable colors</label>
       </div>
+      <div class="toggle-row">
+        <input id="blockTrackers" type="checkbox">
+        <label for="blockTrackers">Block trackers</label>
+      </div>
+      <div class="field">
+        <button id="exportSettings" class="black" type="button">Export settings</button>
+        <button id="importSettings" class="off" type="button">Import settings</button>
+        <input id="importFile" type="file" accept=".json,application/json" style="display:none" />
+      </div>
       <div class="hint">Customize major page colors, then refresh the site if needed.</div>
     </div>
     <script src="popup.js"></script>

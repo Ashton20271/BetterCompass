@@ -22,6 +22,7 @@
   }
 
   const TIMETABLE_COLORS_KEY = "compass-timetable-colors-enabled";
+  const TIMETABLE_DISABLED_COLOR = "lightblue";
   let timetableColorsEnabled = true;
   const THEME_COLOR_KEYS = {
     bgColor: "compass-theme-bg",
@@ -73,6 +74,8 @@
         const color = key && localStorage.getItem(key);
         if (isActive() && color && timetableColorsEnabled) {
           el.style.backgroundColor = color;
+        } else if (isActive() && !timetableColorsEnabled) {
+          el.style.backgroundColor = TIMETABLE_DISABLED_COLOR;
         } else {
           el.style.backgroundColor = "";
         }
@@ -121,8 +124,12 @@
   });
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message && message.action === 'applyCustomTheme') {
+    if (!message || !message.action) return;
+    if (message.action === 'applyCustomTheme') {
       applyCustomTheme();
+    }
+    if (message.action === 'refreshTimetableColors') {
+      refreshTimetableColors();
     }
   });
 
@@ -348,6 +355,15 @@
   function updateTimetableColorsEnabled(value) {
     timetableColorsEnabled = !!value;
     restore();
+  }
+
+  function refreshTimetableColors() {
+    chrome.storage.local.get(TIMETABLE_COLORS_KEY, result => {
+      const stored = result.hasOwnProperty(TIMETABLE_COLORS_KEY)
+        ? result[TIMETABLE_COLORS_KEY]
+        : true;
+      updateTimetableColorsEnabled(stored);
+    });
   }
 
   function applyCustomTheme() {

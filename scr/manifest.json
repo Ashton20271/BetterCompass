@@ -6,6 +6,9 @@
     "icons": {
     "128": "icon-128.png"
   },
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": [
@@ -24,6 +27,7 @@
     "default_title": "Better Compass"
   },
   "permissions": [
-    "storage"
+    "storage",
+    "declarativeNetRequest"
   ]
 }
