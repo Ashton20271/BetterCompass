@@ -6,6 +6,7 @@ const TRACKER_RULES = [
     action: { type: 'block' },
     condition: {
       urlFilter: '||googletagmanager.com^',
+      initiatorDomains: ['compass.education'],
       resourceTypes: ['script', 'xmlhttprequest', 'sub_frame', 'image', 'stylesheet', 'other'],
     },
   },
@@ -15,6 +16,7 @@ const TRACKER_RULES = [
     action: { type: 'block' },
     condition: {
       urlFilter: '||loudflareinsights.com^',
+      initiatorDomains: ['compass.education'],
       resourceTypes: ['script', 'xmlhttprequest', 'sub_frame', 'image', 'stylesheet', 'other'],
     },
   },
@@ -24,6 +26,7 @@ const TRACKER_RULES = [
     action: { type: 'block' },
     condition: {
       urlFilter: '||sentry.io^',
+      initiatorDomains: ['compass.education'],
       resourceTypes: ['script', 'xmlhttprequest', 'sub_frame', 'image', 'stylesheet', 'other'],
     },
   },
@@ -33,6 +36,7 @@ const TRACKER_RULES = [
     action: { type: 'block' },
     condition: {
       urlFilter: '||google.com^',
+      initiatorDomains: ['compass.education'],
       resourceTypes: ['script', 'xmlhttprequest', 'sub_frame', 'image', 'stylesheet', 'other'],
     },
   },
