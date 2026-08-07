@@ -9,11 +9,24 @@
     mode = inverted === "false" ? "off" : DEFAULT_MODE;
   }
 
-  function applyMode(value) {
+  function removeAllThemeClasses() {
     document.documentElement.classList.remove("compass-mode-black");
+    if (document.body) {
+      Array.from(document.body.classList)
+        .filter(cls => cls.startsWith('theme-'))
+        .forEach(cls => document.body.classList.remove(cls));
+    }
+  }
+
+  function applyMode(value) {
+    removeAllThemeClasses();
 
     if (value === "black") {
       document.documentElement.classList.add("compass-mode-black");
+    } else if (value === "default") {
+      document.body.classList.add("theme-default");
+    } else if (value !== "off") {
+      document.body.classList.add("theme-" + value);
     }
   }
 
@@ -23,7 +36,11 @@
 
   const TIMETABLE_COLORS_KEY = "compass-timetable-colors-enabled";
   const TIMETABLE_DISABLED_COLOR = "lightblue";
+  const BACKGROUND_IMAGE_KEY = "backgroundImage";
+  const BACKGROUND_OPACITY_KEY = "backgroundOpacity";
+  const BACKGROUND_BLUR_KEY = "backgroundBlur";
   let timetableColorsEnabled = true;
+  let customBackgroundLayer = null;
   const THEME_COLOR_KEYS = {
     bgColor: "compass-theme-bg",
     textColor: "compass-theme-text",
@@ -40,6 +57,65 @@
   const themeStyle = document.createElement("style");
   themeStyle.id = "compass-theme-overrides";
   document.head ? document.head.appendChild(themeStyle) : document.documentElement.appendChild(themeStyle);
+
+  function ensureBackgroundLayer() {
+    if (customBackgroundLayer) {
+      return customBackgroundLayer;
+    }
+
+    if (!document.body) {
+      return null;
+    }
+
+    customBackgroundLayer = document.createElement("div");
+    customBackgroundLayer.id = "betterCompassBackgroundLayer";
+    customBackgroundLayer.style.cssText = `
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center center;
+      background-attachment: fixed;
+      background-color: transparent;
+      filter: brightness(0.75) contrast(1.05);
+    `;
+    document.body.insertBefore(customBackgroundLayer, document.body.firstChild);
+    if (!document.body.style.position) {
+      document.body.style.position = "relative";
+    }
+    return customBackgroundLayer;
+  }
+
+  function applyBackgroundImage(url) {
+    const imageUrl = url?.trim();
+    const layer = ensureBackgroundLayer();
+    if (!layer) return;
+
+    if (imageUrl) {
+      layer.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url("${imageUrl}")`;
+      layer.style.backgroundBlendMode = "normal";
+      document.body.classList.add("has-custom-background");
+    } else {
+      layer.style.backgroundImage = "";
+      layer.style.backgroundBlendMode = "";
+      document.body.classList.remove("has-custom-background");
+    }
+  }
+
+  function applyBackgroundOpacity(value) {
+    const layer = ensureBackgroundLayer();
+    if (!layer) return;
+    const opacity = Number(value);
+    layer.style.opacity = isNaN(opacity) ? 0.75 : Math.max(0, Math.min(1, opacity / 100));
+  }
+
+  function applyBackgroundBlur(value) {
+    const blur = Number(value);
+    const blurValue = isNaN(blur) ? 8 : Math.max(0, Math.min(32, blur));
+    document.body.style.setProperty('--better-compass-background-blur', `${blurValue}px`);
+  }
 
   function resetNewsStyles() {
     document.querySelectorAll(".MuiStack-root").forEach(stack => {
@@ -102,9 +178,12 @@
 
   applyMode(mode);
 
-  chrome.storage.local.get(MODE_KEY, result => {
+  chrome.storage.local.get([MODE_KEY, BACKGROUND_IMAGE_KEY, BACKGROUND_OPACITY_KEY, BACKGROUND_BLUR_KEY], result => {
     const stored = result[MODE_KEY] || mode;
     setMode(stored);
+    applyBackgroundOpacity(result[BACKGROUND_OPACITY_KEY]);
+    applyBackgroundBlur(result[BACKGROUND_BLUR_KEY]);
+    applyBackgroundImage(result[BACKGROUND_IMAGE_KEY]);
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -118,6 +197,15 @@
     if (changes["compass-timetable-colors-enabled"]) {
       updateTimetableColorsEnabled(!!changes["compass-timetable-colors-enabled"].newValue);
     }
+    if (changes[BACKGROUND_IMAGE_KEY]) {
+      applyBackgroundImage(changes[BACKGROUND_IMAGE_KEY].newValue);
+    }
+    if (changes[BACKGROUND_OPACITY_KEY]) {
+      applyBackgroundOpacity(changes[BACKGROUND_OPACITY_KEY].newValue);
+    }
+    if (changes[BACKGROUND_BLUR_KEY]) {
+      applyBackgroundBlur(changes[BACKGROUND_BLUR_KEY].newValue);
+    }
     if (Object.values(THEME_COLOR_KEYS).some(key => key in changes)) {
       applyCustomTheme();
     }
@@ -130,6 +218,17 @@
     }
     if (message.action === 'refreshTimetableColors') {
       refreshTimetableColors();
+    }
+    if (message.action === 'applyBackgroundImage') {
+      chrome.storage.local.get([BACKGROUND_IMAGE_KEY, BACKGROUND_OPACITY_KEY], result => {
+        applyBackgroundOpacity(result[BACKGROUND_OPACITY_KEY]);
+        applyBackgroundImage(result[BACKGROUND_IMAGE_KEY]);
+      });
+    }
+    if (message.action === 'applyBackgroundBlur') {
+      chrome.storage.local.get([BACKGROUND_BLUR_KEY], result => {
+        applyBackgroundBlur(result[BACKGROUND_BLUR_KEY]);
+      });
     }
   });
 

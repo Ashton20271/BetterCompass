@@ -154,3 +154,129 @@ html.compass-mode-black svg {
   filter: none !important;
 }
 
+body[class*="theme-"] {
+  background-color: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+body.has-custom-background,
+body.has-custom-background [class*="MuiPaper-root"],
+body.has-custom-background [class*="MuiCard-root"],
+body.has-custom-background .MuiBox-root,
+body.has-custom-background .MuiAccordion-root,
+body.has-custom-background .MuiContainer-root,
+body.has-custom-background .x-panel-body,
+body.has-custom-background .x-calendar-list,
+body.has-custom-background .newLNF .home-schoolNameContainer,
+body.has-custom-background .css-szig0z .css-dt2n38 {
+  background-color: rgba(0, 0, 0, 0.55) !important;
+  color: white !important;
+}
+
+body.has-custom-background {
+  --better-compass-background-blur: 8px;
+}
+
+body.has-custom-background .MuiPaper-root,
+body.has-custom-background .MuiCard-root,
+body.has-custom-background .MuiBox-root,
+body.has-custom-background .MuiAccordion-root,
+body.has-custom-background .MuiContainer-root,
+body.has-custom-background .x-panel-body,
+body.has-custom-background .x-calendar-list,
+body.has-custom-background .newLNF .home-schoolNameContainer,
+body.has-custom-background .css-szig0z .css-dt2n38 {
+  backdrop-filter: blur(var(--better-compass-background-blur, 8px));
+}
+
+body[class*="theme-"] :is(.MuiPaper-root, .MuiCard-root, .MuiBox-root, .MuiAccordion-root, .MuiContainer-root, .x-panel-body, .x-calendar-list, .newLNF .home-schoolNameContainer, .css-szig0z .css-dt2n38) {
+  background-color: var(--card) !important;
+  color: var(--text) !important;
+}
+
+body[class*="theme-"] :is(.DayViewEvent-event, .EventTile-root, .CalendarEvent) {
+  background-color: var(--card) !important;
+  color: var(--text) !important;
+  border-left: 4px solid var(--accent) !important;
+}
+
+.theme-default {
+  --bg: white;
+  --text: black;
+  --card: #f0f0f0;
+  --accent: #d0eaff;
+}
+
+.theme-blue2 {
+  --bg: #e8f1ff;
+  --text: #003366;
+  --card: #d6e6ff;
+  --accent: #bcd4ff;
+}
+
+.theme-sunset2 {
+  --bg: #fff1e6;
+  --text: #5a2a00;
+  --card: #ffe0c2;
+  --accent: #ffb38a;
+}
+
+.theme-pastelpink2 {
+  --bg: #ffffff;
+  --text: #ab80a7;
+  --card: #ebbee0;
+  --accent: #f2d2ee;
+}
+
+.theme-forest2 {
+  --bg: #148b1e;
+  --text: rgb(131, 155, 180);
+  --card: #148b1e;
+  --accent: #0c542a;
+}
+
+.theme-red1 {
+  --bg: #bb1111c1;
+  --text: #000407;
+  --card: transparent;
+  --accent: #ff0d0d;
+}
+
+.theme-clear {
+  --bg: transparent;
+  --text: #000407;
+  --card: transparent;
+  --accent: #6040ff;
+}
+
+.theme-tdark {
+  --bg: #000000;
+  --text: #99ed84;
+  --card: #000000;
+  --accent: #000000;
+}
+
+.theme-invert {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.theme-invertG {
+  filter: invert(1) hue-rotate(90deg);
+}
+
+.theme-Dark3 {
+  filter: invert(1) hue-rotate(20deg);
+}
+
+.theme-Dark4 {
+  filter: invert(1) hue-rotate(0deg);
+}
+
+.theme-Dark5 {
+  filter: invert(1) hue-rotate(250deg);
+}
+
+.theme-Dark6 {
+  filter: invert(1) hue-rotate(320deg);
+}
+

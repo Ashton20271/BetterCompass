@@ -28,6 +28,16 @@
         font-size: 13px;
         cursor: pointer;
       }
+      .theme-select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: none;
+        background: #1f2937;
+        color: #f8fafc;
+        font-size: 13px;
+        cursor: pointer;
+      }
       button.black {
         background: #0f172a;
         color: #f8fafc;
@@ -48,13 +58,39 @@
         gap: 8px;
         font-size: 13px;
       }
-      .field input[type="color"] {
+      .field input[type="color"], .field input[type="text"], .field input[type="file"], .field input[type="range"] {
         width: 100%;
         height: 34px;
         border: none;
-        padding: 0;
-        background: transparent;
+        padding: 0 10px;
+        border-radius: 8px;
+        background: #111827;
+        color: #f8fafc;
         cursor: pointer;
+      }
+      .field input[type="file"] {
+        padding: 0;
+        height: auto;
+      }
+      .field input[type="range"] {
+        padding: 0;
+        height: auto;
+      }
+      .range-value {
+        font-size: 12px;
+        color: #94a3b8;
+      }
+      .background-preview {
+        width: 100%;
+        max-height: 140px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        display: none;
+      }
+      .background-row {
+        display: grid;
+        gap: 8px;
       }
       .toggle-row {
         margin-top: 12px;
@@ -98,8 +134,39 @@
   <body>
     <div class="popup">
       <h1>Better Compass</h1>
-      <button class="black" data-mode="black">Black Theme</button>
-      <button class="off" data-mode="off">Default Theme</button>
+      <div class="field">
+        <label for="themeSelect">Theme
+          <select id="themeSelect" class="theme-select">
+            <option value="off">Default Theme</option>
+            <option value="black">Black Theme</option>
+            <option value="blue2">Blue Expanded</option>
+            <option value="sunset2">Sunset Expanded</option>
+            <option value="pastelpink2">Pastel Pink Expanded</option>
+            <option value="forest2">Forest Expanded</option>
+            <option value="red1">Red</option>
+            <option value="clear">Clear</option>
+            <option value="invert">Invert (True dark)</option>
+            <option value="tdark">Dark</option>
+            <option value="invertG">Invert Green</option>
+            <option value="Dark3">Dark 3</option>
+            <option value="Dark4">Dark 4</option>
+            <option value="Dark5">Dark 5</option>
+            <option value="Dark6">Dark 6</option>
+          </select>
+        </label>
+      </div>
+      <div class="field background-row">
+        <label for="backgroundImage">Background image URL (FOR BACKGROUND USE CLEAR THEME)</label>
+        <input id="backgroundImage" type="text" placeholder="image url">
+        <label for="backgroundFile">Upload local image</label>
+        <input id="backgroundFile" type="file" accept="image/*">
+        <label for="backgroundOpacity">Background opacity <span id="backgroundOpacityValue" class="range-value">75%</span></label>
+        <input id="backgroundOpacity" type="range" min="0" max="100" step="1">
+        <label for="backgroundBlur">Background blur <span id="backgroundBlurValue" class="range-value">8px</span></label>
+        <input id="backgroundBlur" type="range" min="0" max="32" step="1">
+        <button id="clearBackground" class="off" type="button">Clear background</button>
+        <img id="backgroundPreview" class="background-preview" alt="Preview">
+      </div>
       <div class="field">
         <label for="bgColor">Page background <input id="bgColor" type="color"></label>
         <label for="textColor">Text color <input id="textColor" type="color"></label>

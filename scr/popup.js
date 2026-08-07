@@ -2,6 +2,9 @@ const MODE_KEY = "compass-mode";
 const AUTO_LOGIN_KEY = "compass-auto-login-enabled";
 const TIMETABLE_COLORS_KEY = "compass-timetable-colors-enabled";
 const BLOCK_TRACKERS_KEY = "compass-block-trackers-enabled";
+const BACKGROUND_IMAGE_KEY = "backgroundImage";
+const BACKGROUND_OPACITY_KEY = "backgroundOpacity";
+const BACKGROUND_BLUR_KEY = "backgroundBlur";
 const THEME_PAGE_KEYS = {
   bgColor: "compass-theme-bg",
   textColor: "compass-theme-text",
@@ -77,6 +80,7 @@ function importSettingsFile(file, refreshCallback) {
       chrome.storage.local.set(parsed, () => {
         refreshCallback();
         notifyPage({ action: 'applyCustomTheme' });
+        notifyPage({ action: 'applyBackgroundImage' });
         alert('Settings imported successfully.');
       });
     } catch (error) {
@@ -90,16 +94,25 @@ function importSettingsFile(file, refreshCallback) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("button[data-mode]").forEach(button => {
-    button.addEventListener("click", () => {
-      setTheme(button.dataset.mode);
+  const themeSelect = document.getElementById('themeSelect');
+  if (themeSelect) {
+    themeSelect.addEventListener('change', () => {
+      setTheme(themeSelect.value);
       window.close();
     });
-  });
+  }
 
   const autoLoginEl = document.getElementById('autoLogin');
   const timetableEl = document.getElementById('timetableColors');
   const blockTrackersEl = document.getElementById('blockTrackers');
+  const backgroundImageInput = document.getElementById('backgroundImage');
+  const backgroundFileInput = document.getElementById('backgroundFile');
+  const backgroundOpacitySlider = document.getElementById('backgroundOpacity');
+  const backgroundOpacityValue = document.getElementById('backgroundOpacityValue');
+  const backgroundBlurSlider = document.getElementById('backgroundBlur');
+  const backgroundBlurValue = document.getElementById('backgroundBlurValue');
+  const clearBackgroundButton = document.getElementById('clearBackground');
+  const backgroundPreview = document.getElementById('backgroundPreview');
   const importButton = document.getElementById('importSettings');
   const exportButton = document.getElementById('exportSettings');
   const importFileInput = document.getElementById('importFile');
@@ -123,11 +136,34 @@ document.addEventListener("DOMContentLoaded", () => {
       [AUTO_LOGIN_KEY]: true,
       [TIMETABLE_COLORS_KEY]: true,
       [BLOCK_TRACKERS_KEY]: false,
+      [MODE_KEY]: 'off',
+      [BACKGROUND_IMAGE_KEY]: '',
+      [BACKGROUND_OPACITY_KEY]: 75,
+      [BACKGROUND_BLUR_KEY]: 8,
       ...Object.fromEntries(Object.values(THEME_PAGE_KEYS).map(k => [k, ''])),
     }, result => {
       autoLoginEl.checked = !!result[AUTO_LOGIN_KEY];
       timetableEl.checked = !!result[TIMETABLE_COLORS_KEY];
       blockTrackersEl.checked = !!result[BLOCK_TRACKERS_KEY];
+      if (themeSelect) {
+        themeSelect.value = result[MODE_KEY] || 'off';
+      }
+        if (backgroundImageInput) {
+        backgroundImageInput.value = result[BACKGROUND_IMAGE_KEY] || '';
+      }
+      if (backgroundOpacitySlider) {
+        const opacityValue = result[BACKGROUND_OPACITY_KEY] ?? 75;
+        backgroundOpacitySlider.value = opacityValue;
+        updateBackgroundOpacityLabel(opacityValue);
+      }
+      if (backgroundBlurSlider) {
+        const blurValue = result[BACKGROUND_BLUR_KEY] ?? 8;
+        backgroundBlurSlider.value = blurValue;
+        updateBackgroundBlurLabel(blurValue);
+      }
+      if (backgroundPreview) {
+        updateBackgroundPreview(result[BACKGROUND_IMAGE_KEY]);
+      }
       Object.entries(THEME_PAGE_KEYS).forEach(([inputKey, storageKey]) => {
         if (colorInputs[inputKey]) {
           colorInputs[inputKey].value = result[storageKey] || '#000000';
@@ -165,6 +201,100 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  function updateBackgroundPreview(url) {
+    if (!backgroundPreview) return;
+    if (url) {
+      backgroundPreview.src = url;
+      backgroundPreview.style.display = 'block';
+    } else {
+      backgroundPreview.src = '';
+      backgroundPreview.style.display = 'none';
+    }
+  }
+
+  function updateBackgroundOpacityLabel(value) {
+    if (!backgroundOpacityValue) return;
+    backgroundOpacityValue.textContent = `${value}%`;
+  }
+
+  function updateBackgroundBlurLabel(value) {
+    if (!backgroundBlurValue) return;
+    backgroundBlurValue.textContent = `${value}px`;
+  }
+
+  if (backgroundOpacitySlider) {
+    backgroundOpacitySlider.addEventListener('input', event => {
+      const value = parseInt(event.target.value, 10);
+      const opacity = Number.isNaN(value) ? 75 : value;
+      updateBackgroundOpacityLabel(opacity);
+      chrome.storage.local.set({ [BACKGROUND_OPACITY_KEY]: opacity }, () => {
+        notifyPage({ action: 'applyBackgroundImage' });
+      });
+    });
+  }
+
+  if (backgroundBlurSlider) {
+    backgroundBlurSlider.addEventListener('input', event => {
+      const value = parseInt(event.target.value, 10);
+      const blur = Number.isNaN(value) ? 8 : value;
+      updateBackgroundBlurLabel(blur);
+      chrome.storage.local.set({ [BACKGROUND_BLUR_KEY]: blur }, () => {
+        notifyPage({ action: 'applyBackgroundBlur' });
+      });
+    });
+  }
+
+  if (backgroundImageInput) {
+    backgroundImageInput.addEventListener('input', event => {
+      const url = event.target.value.trim();
+      if (url) {
+        chrome.storage.local.set({ [BACKGROUND_IMAGE_KEY]: url }, () => {
+          notifyPage({ action: 'applyBackgroundImage' });
+        });
+      } else {
+        chrome.storage.local.remove(BACKGROUND_IMAGE_KEY, () => {
+          notifyPage({ action: 'applyBackgroundImage' });
+        });
+      }
+      updateBackgroundPreview(url);
+    });
+  }
+
+  if (backgroundFileInput) {
+    backgroundFileInput.addEventListener('change', event => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        if (backgroundImageInput) {
+          backgroundImageInput.value = '';
+        }
+        chrome.storage.local.set({ [BACKGROUND_IMAGE_KEY]: dataUrl }, () => {
+          notifyPage({ action: 'applyBackgroundImage' });
+        });
+        updateBackgroundPreview(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (clearBackgroundButton) {
+    clearBackgroundButton.addEventListener('click', () => {
+      if (backgroundImageInput) {
+        backgroundImageInput.value = '';
+      }
+      if (backgroundFileInput) {
+        backgroundFileInput.value = '';
+      }
+      chrome.storage.local.remove(BACKGROUND_IMAGE_KEY, () => {
+        notifyPage({ action: 'applyBackgroundImage' });
+      });
+      updateBackgroundPreview('');
+    });
+  }
+
   exportButton.addEventListener('click', exportSettings);
 
   importButton.addEventListener('click', () => {
@@ -179,6 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
         refreshUiFromStorage();
         notifyPage({ action: 'applyCustomTheme' });
         notifyPage({ action: 'refreshTimetableColors' });
+        notifyPage({ action: 'applyBackgroundBlur' });
       });
     }
   });
