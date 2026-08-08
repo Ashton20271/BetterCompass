@@ -764,4 +764,30 @@
 
   applyCustomTheme();
 
+  (() => {
+    const replacement = chrome.runtime.getURL("logo.png");
+
+    function replaceHouseIcon(el) {
+      if (el.dataset.betterCompassReplaced) return;
+      el.dataset.betterCompassReplaced = "1";
+
+      el.style.setProperty("background-image", `url("${replacement}")`, "important");
+      el.style.setProperty("background-position", "center", "important");
+      el.style.setProperty("background-size", "contain", "important");
+      el.style.setProperty("background-repeat", "no-repeat", "important");
+    }
+
+    function scan() {
+      document
+        .querySelectorAll(".menu-sprite.menu-sprite-house")
+        .forEach(replaceHouseIcon);
+    }
+
+    scan();
+    new MutationObserver(scan).observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+  })();
+
 })();

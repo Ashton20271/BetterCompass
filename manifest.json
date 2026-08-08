@@ -9,6 +9,12 @@
   "background": {
     "service_worker": "background.js"
   },
+  "web_accessible_resources": [
+    {
+      "resources": ["logo.png"],
+      "matches": ["*://*.compass.education/*"]
+    }
+  ],
   "content_scripts": [
     {
       "matches": [
