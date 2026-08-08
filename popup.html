@@ -96,6 +96,14 @@
       .background-row {
         display: grid;
         gap: 8px;
+        padding: 12px;
+        border: 1px dashed #475569;
+        border-radius: 12px;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .background-row.drag-over {
+        border-color: #60a5fa;
+        background: rgba(96, 165, 250, 0.08);
       }
       .background-heading {
         display: grid;
@@ -156,7 +164,7 @@
       <div class="field background-row">
         <div class="background-heading">
           <strong>Background image</strong>
-          <span class="hint">Use an image URL or upload an image.</span>
+          <span class="hint">Use an image URL, upload, or drag-and-drop an image.</span>
         </div>
         <label for="backgroundImage">Image URL</label>
         <input id="backgroundImage" type="url" inputmode="url" placeholder="image url here" autocomplete="off">

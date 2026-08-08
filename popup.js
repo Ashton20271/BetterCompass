@@ -58,17 +58,35 @@ function getAllSettings(callback) {
   chrome.storage.local.get(null, callback);
 }
 
+function downloadSettings(settings) {
+  const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'better-compass-settings.json';
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}
+
 function exportSettings() {
   getAllSettings(settings => {
-    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = 'better-compass-settings.json';
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
+    const imageValue = settings[BACKGROUND_IMAGE_KEY];
+    if (imageValue instanceof Blob) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        settings[BACKGROUND_IMAGE_KEY] = reader.result;
+        downloadSettings(settings);
+      };
+      reader.onerror = () => {
+        alert('Unable to export settings because the background image could not be serialized.');
+      };
+      reader.readAsDataURL(imageValue);
+      return;
+    }
+
+    downloadSettings(settings);
   });
 }
 
@@ -114,6 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const blockTrackersEl = document.getElementById('blockTrackers');
   const backgroundImageInput = document.getElementById('backgroundImage');
   const backgroundFileInput = document.getElementById('backgroundFile');
+  const backgroundRow = document.querySelector('.background-row');
   const backgroundOpacitySlider = document.getElementById('backgroundOpacity');
   const backgroundOpacityValue = document.getElementById('backgroundOpacityValue');
   const backgroundBlurSlider = document.getElementById('backgroundBlur');
@@ -121,6 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearBackgroundButton = document.getElementById('clearBackground');
   const backgroundPreview = document.getElementById('backgroundPreview');
   const backgroundImageError = document.getElementById('backgroundImageError');
+  let currentBackgroundPreviewUrl = null;
   const importButton = document.getElementById('importSettings');
   const exportButton = document.getElementById('exportSettings');
   const importFileInput = document.getElementById('importFile');
@@ -161,7 +181,9 @@ document.addEventListener("DOMContentLoaded", () => {
         themeSelect.value = result[MODE_KEY] || 'off';
       }
       if (backgroundImageInput) {
-        backgroundImageInput.value = result[BACKGROUND_IMAGE_KEY] || '';
+        backgroundImageInput.value = typeof result[BACKGROUND_IMAGE_KEY] === 'string'
+          ? result[BACKGROUND_IMAGE_KEY] || ''
+          : '';
       }
       if (backgroundOpacitySlider) {
         const opacityValue = result[BACKGROUND_OPACITY_KEY] ?? 75;
@@ -226,18 +248,92 @@ document.addEventListener("DOMContentLoaded", () => {
     backgroundImageError.textContent = message || '';
   }
 
-  function updateBackgroundPreview(url) {
-    if (!backgroundPreview) return;
-    const imageUrl = typeof url === 'string' ? url.trim() : '';
+  function getBackgroundStorageValue(file, callback) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const arrayBuffer = reader.result;
+      if (!(arrayBuffer instanceof ArrayBuffer)) {
+        callback(null);
+        return;
+      }
+      const bytes = Array.from(new Uint8Array(arrayBuffer));
+      callback({ type: file.type || 'image/png', data: bytes });
+    };
+    reader.onerror = () => callback(null);
+    reader.readAsArrayBuffer(file);
+  }
 
-    if (!imageUrl) {
+  function handleBackgroundFile(file) {
+    if (!file) return;
+    if (!file.type || !file.type.startsWith('image/')) {
+      setBackgroundImageError('Please drop or select a valid image file.');
+      return;
+    }
+
+    if (backgroundImageInput) {
+      backgroundImageInput.value = '';
+    }
+    if (backgroundFileInput) {
+      backgroundFileInput.value = '';
+    }
+
+    setBackgroundImageError('');
+    getBackgroundStorageValue(file, storageValue => {
+      if (!storageValue) {
+        setBackgroundImageError('Failed to store the selected image.');
+        return;
+      }
+
+      if (extensionStorageAvailable) {
+        chrome.storage.local.set({ [BACKGROUND_IMAGE_KEY]: storageValue }, () => {
+          notifyPage({ action: 'applyBackgroundImage', image: storageValue });
+        });
+      } else {
+        notifyPage({ action: 'applyBackgroundImage', image: storageValue });
+      }
+    });
+
+    updateBackgroundPreview(file);
+  }
+
+  function revokeBackgroundPreviewUrl() {
+    if (currentBackgroundPreviewUrl) {
+      URL.revokeObjectURL(currentBackgroundPreviewUrl);
+      currentBackgroundPreviewUrl = null;
+    }
+  }
+
+  function isBackgroundStorageValue(value) {
+    return value && typeof value === 'object' && typeof value.type === 'string' && Array.isArray(value.data);
+  }
+
+  function updateBackgroundPreview(value) {
+    if (!backgroundPreview) return;
+    revokeBackgroundPreviewUrl();
+
+    if (!value) {
       backgroundPreview.removeAttribute('src');
       backgroundPreview.style.display = 'none';
       setBackgroundImageError('');
       return;
     }
 
-    backgroundPreview.src = imageUrl;
+    if (typeof value === 'string') {
+      backgroundPreview.src = value.trim();
+    } else if (value instanceof Blob) {
+      currentBackgroundPreviewUrl = URL.createObjectURL(value);
+      backgroundPreview.src = currentBackgroundPreviewUrl;
+    } else if (isBackgroundStorageValue(value)) {
+      const blob = new Blob([new Uint8Array(value.data)], { type: value.type });
+      currentBackgroundPreviewUrl = URL.createObjectURL(blob);
+      backgroundPreview.src = currentBackgroundPreviewUrl;
+    } else {
+      backgroundPreview.removeAttribute('src');
+      backgroundPreview.style.display = 'none';
+      setBackgroundImageError('');
+      return;
+    }
+
     backgroundPreview.style.display = 'block';
     setBackgroundImageError('');
   }
@@ -247,6 +343,39 @@ document.addEventListener("DOMContentLoaded", () => {
       setBackgroundImageError('Unable to load preview image. Please try a different file or URL.');
       backgroundPreview.style.display = 'none';
     });
+  }
+
+  function onBackgroundDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+    if (backgroundRow) {
+      backgroundRow.classList.add('drag-over');
+    }
+  }
+
+  function onBackgroundDragLeave() {
+    if (backgroundRow) {
+      backgroundRow.classList.remove('drag-over');
+    }
+  }
+
+  function onBackgroundDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (backgroundRow) {
+      backgroundRow.classList.remove('drag-over');
+    }
+
+    const files = event.dataTransfer.files;
+    if (!files || !files.length) return;
+    handleBackgroundFile(files[0]);
+  }
+
+  if (backgroundRow) {
+    backgroundRow.addEventListener('dragenter', onBackgroundDragOver);
+    backgroundRow.addEventListener('dragover', onBackgroundDragOver);
+    backgroundRow.addEventListener('dragleave', onBackgroundDragLeave);
+    backgroundRow.addEventListener('drop', onBackgroundDrop);
   }
 
   function isSupportedBackgroundUrl(value) {
@@ -331,28 +460,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = typeof reader.result === 'string' ? reader.result : '';
-        if (!dataUrl) {
-          setBackgroundImageError('Failed to read the selected image file.');
-          return;
-        }
+      if (backgroundImageInput) {
+        backgroundImageInput.value = '';
+      }
 
-        if (backgroundImageInput) {
-          backgroundImageInput.value = '';
-        }
-
-        setBackgroundImageError('');
-        if (extensionStorageAvailable) {
-          chrome.storage.local.set({ [BACKGROUND_IMAGE_KEY]: dataUrl }, () => {
-            notifyPage({ action: 'applyBackgroundImage' });
-          });
-        }
-
-        updateBackgroundPreview(dataUrl);
-      };
-      reader.readAsDataURL(file);
+      handleBackgroundFile(file);
     });
   }
 

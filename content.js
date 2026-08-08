@@ -36,7 +36,36 @@
     return new Blob([buffer], { type: mimeType });
   }
 
+  function backgroundStorageValueToBlob(value) {
+    if (!value || typeof value !== 'object' || typeof value.type !== 'string' || !Array.isArray(value.data)) {
+      return null;
+    }
+    return new Blob([new Uint8Array(value.data)], { type: value.type });
+  }
+
   function resolveBackgroundImageUrl(url) {
+    const storageBlob = backgroundStorageValueToBlob(url);
+    if (storageBlob) {
+      if (url === currentBackgroundSource && currentBackgroundBlobUrl) {
+        return currentBackgroundBlobUrl;
+      }
+
+      revokeCurrentBackgroundBlobUrl();
+      currentBackgroundBlobUrl = URL.createObjectURL(storageBlob);
+      currentBackgroundSource = url;
+      return currentBackgroundBlobUrl;
+    }
+    if (url instanceof Blob) {
+      if (url === currentBackgroundSource && currentBackgroundBlobUrl) {
+        return currentBackgroundBlobUrl;
+      }
+
+      revokeCurrentBackgroundBlobUrl();
+      currentBackgroundBlobUrl = URL.createObjectURL(url);
+      currentBackgroundSource = url;
+      return currentBackgroundBlobUrl;
+    }
+
     const imageUrl = typeof url === 'string' ? url.trim() : '';
     if (!imageUrl) {
       revokeCurrentBackgroundBlobUrl();
@@ -321,6 +350,11 @@
       refreshTimetableColors();
     }
     if (message.action === 'applyBackgroundImage') {
+      if (message.image) {
+        applyBackgroundImage(message.image);
+        return;
+      }
+
       chrome.storage.local.get([BACKGROUND_IMAGE_KEY, BACKGROUND_OPACITY_KEY], result => {
         applyBackgroundOpacity(result[BACKGROUND_OPACITY_KEY]);
         applyBackgroundImage(result[BACKGROUND_IMAGE_KEY]);
