@@ -203,12 +203,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateBackgroundPreview(url) {
     if (!backgroundPreview) return;
-    if (url) {
-      backgroundPreview.src = url;
-      backgroundPreview.style.display = 'block';
-    } else {
-      backgroundPreview.src = '';
+    const imageUrl = typeof url === 'string' ? url.trim() : '';
+
+    if (!imageUrl) {
+      backgroundPreview.removeAttribute('src');
       backgroundPreview.style.display = 'none';
+      return;
+    }
+
+    backgroundPreview.src = imageUrl;
+    backgroundPreview.style.display = 'block';
+  }
+
+  function isSupportedBackgroundUrl(value) {
+    if (!value) return false;
+    if (/^data:image\//i.test(value)) return true;
+    if (/^blob:/i.test(value)) return true;
+
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
     }
   }
 
@@ -247,6 +263,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (backgroundImageInput) {
     backgroundImageInput.addEventListener('input', event => {
       const url = event.target.value.trim();
+
+      if (url && !isSupportedBackgroundUrl(url)) {
+        updateBackgroundPreview('');
+        return;
+      }
+
       if (url) {
         chrome.storage.local.set({ [BACKGROUND_IMAGE_KEY]: url }, () => {
           notifyPage({ action: 'applyBackgroundImage' });
@@ -256,6 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
           notifyPage({ action: 'applyBackgroundImage' });
         });
       }
+
       updateBackgroundPreview(url);
     });
   }
@@ -267,13 +290,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const reader = new FileReader();
       reader.onload = () => {
-        const dataUrl = reader.result;
+        const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+        if (!dataUrl) return;
+
         if (backgroundImageInput) {
           backgroundImageInput.value = '';
         }
+
         chrome.storage.local.set({ [BACKGROUND_IMAGE_KEY]: dataUrl }, () => {
           notifyPage({ action: 'applyBackgroundImage' });
         });
+
         updateBackgroundPreview(dataUrl);
       };
       reader.readAsDataURL(file);

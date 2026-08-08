@@ -59,7 +59,7 @@
   document.head ? document.head.appendChild(themeStyle) : document.documentElement.appendChild(themeStyle);
 
   function ensureBackgroundLayer() {
-    if (customBackgroundLayer) {
+    if (customBackgroundLayer && document.body.contains(customBackgroundLayer)) {
       return customBackgroundLayer;
     }
 
@@ -69,37 +69,69 @@
 
     customBackgroundLayer = document.createElement("div");
     customBackgroundLayer.id = "betterCompassBackgroundLayer";
+    customBackgroundLayer.setAttribute("aria-hidden", "true");
     customBackgroundLayer.style.cssText = `
       position: fixed;
       inset: 0;
       z-index: -1;
       pointer-events: none;
-      background-repeat: no-repeat;
-      background-size: cover;
-      background-position: center center;
-      background-attachment: fixed;
-      background-color: transparent;
-      filter: brightness(0.75) contrast(1.05);
+      overflow: hidden;
+      background: transparent;
     `;
+
+    const image = document.createElement("img");
+    image.id = "betterCompassBackgroundImage";
+    image.alt = "";
+    image.draggable = false;
+    image.decoding = "async";
+    image.style.cssText = `
+      position: absolute;
+      inset: -2%;
+      width: 104%;
+      height: 104%;
+      object-fit: cover;
+      object-position: center center;
+      opacity: 1;
+      filter: brightness(0.75) contrast(1.05);
+      user-select: none;
+      pointer-events: none;
+    `;
+
+    const overlay = document.createElement("div");
+    overlay.id = "betterCompassBackgroundOverlay";
+    overlay.style.cssText = `
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35));
+      pointer-events: none;
+    `;
+
+    customBackgroundLayer.appendChild(image);
+    customBackgroundLayer.appendChild(overlay);
     document.body.insertBefore(customBackgroundLayer, document.body.firstChild);
+
     if (!document.body.style.position) {
       document.body.style.position = "relative";
     }
+
     return customBackgroundLayer;
   }
 
   function applyBackgroundImage(url) {
-    const imageUrl = url?.trim();
+    const imageUrl = typeof url === "string" ? url.trim() : "";
     const layer = ensureBackgroundLayer();
     if (!layer) return;
 
+    const image = layer.querySelector("#betterCompassBackgroundImage");
+    if (!image) return;
+
     if (imageUrl) {
-      layer.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url("${imageUrl}")`;
-      layer.style.backgroundBlendMode = "normal";
+      if (image.src !== imageUrl) {
+        image.src = imageUrl;
+      }
       document.body.classList.add("has-custom-background");
     } else {
-      layer.style.backgroundImage = "";
-      layer.style.backgroundBlendMode = "";
+      image.removeAttribute("src");
       document.body.classList.remove("has-custom-background");
     }
   }
@@ -107,14 +139,28 @@
   function applyBackgroundOpacity(value) {
     const layer = ensureBackgroundLayer();
     if (!layer) return;
+
     const opacity = Number(value);
-    layer.style.opacity = isNaN(opacity) ? 0.75 : Math.max(0, Math.min(1, opacity / 100));
+    const normalizedOpacity = Number.isFinite(opacity)
+      ? Math.max(0, Math.min(100, opacity))
+      : 75;
+
+    const image = layer.querySelector("#betterCompassBackgroundImage");
+    if (image) {
+      image.style.opacity = String(normalizedOpacity / 100);
+    }
   }
 
   function applyBackgroundBlur(value) {
     const blur = Number(value);
-    const blurValue = isNaN(blur) ? 8 : Math.max(0, Math.min(32, blur));
-    document.body.style.setProperty('--better-compass-background-blur', `${blurValue}px`);
+    const blurValue = Number.isFinite(blur)
+      ? Math.max(0, Math.min(32, blur))
+      : 8;
+
+    document.body.style.setProperty(
+      "--better-compass-background-blur",
+      `${blurValue}px`
+    );
   }
 
   function resetNewsStyles() {

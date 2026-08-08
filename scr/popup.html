@@ -92,6 +92,11 @@
         display: grid;
         gap: 8px;
       }
+      .background-heading {
+        display: grid;
+        gap: 4px;
+        margin-bottom: 2px;
+      }
       .toggle-row {
         margin-top: 12px;
         display: flex;
@@ -144,16 +149,20 @@
         </label>
       </div>
       <div class="field background-row">
-        <label for="backgroundImage">Background url (use transparent) — Thanks to <a href="https://github.com/eaDC22mn" target="_blank" rel="noopener noreferrer">eaDC22mn</a> for part of background feature</label>
-        <input id="backgroundImage" type="text" placeholder="image url">
+        <div class="background-heading">
+          <strong>Background image</strong>
+          <span class="hint">Use an image URL or upload an image. Your existing opacity, blur, preview and clear controls are preserved.</span>
+        </div>
+        <label for="backgroundImage">Image URL</label>
+        <input id="backgroundImage" type="url" inputmode="url" placeholder="https://example.com/image.jpg" autocomplete="off">
         <label for="backgroundFile">Upload image</label>
         <input id="backgroundFile" type="file" accept="image/*">
         <label for="backgroundOpacity">Background opacity <span id="backgroundOpacityValue" class="range-value">75%</span></label>
-        <input id="backgroundOpacity" type="range" min="0" max="100" step="1">
+        <input id="backgroundOpacity" type="range" min="0" max="100" step="1" value="75">
         <label for="backgroundBlur">Background blur <span id="backgroundBlurValue" class="range-value">8px</span></label>
-        <input id="backgroundBlur" type="range" min="0" max="32" step="1">
+        <input id="backgroundBlur" type="range" min="0" max="32" step="1" value="8">
         <button id="clearBackground" class="off" type="button">Clear background</button>
-        <img id="backgroundPreview" class="background-preview" alt="Preview">
+        <img id="backgroundPreview" class="background-preview" alt="Background preview" loading="lazy">
       </div>
       <div class="field">
         <label for="bgColor">Page background <input id="bgColor" type="color"></label>

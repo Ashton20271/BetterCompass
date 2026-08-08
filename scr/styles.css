@@ -159,6 +159,14 @@ body[class*="theme-"] {
   color: var(--text) !important;
 }
 
+#betterCompassBackgroundLayer {
+  isolation: isolate;
+}
+
+#betterCompassBackgroundLayer img {
+  will-change: opacity, filter, transform;
+}
+
 body.has-custom-background,
 body.has-custom-background [class*="MuiPaper-root"],
 body.has-custom-background [class*="MuiCard-root"],
