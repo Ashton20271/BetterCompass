@@ -9,6 +9,65 @@
     mode = inverted === "false" ? "off" : DEFAULT_MODE;
   }
 
+  let customBackgroundLayer = null;
+  let currentBackgroundBlobUrl = null;
+  let currentBackgroundSource = null;
+
+  function revokeCurrentBackgroundBlobUrl() {
+    if (currentBackgroundBlobUrl) {
+      URL.revokeObjectURL(currentBackgroundBlobUrl);
+      currentBackgroundBlobUrl = null;
+    }
+    currentBackgroundSource = null;
+  }
+
+  function dataUrlToBlob(dataUrl) {
+    const match = /^data:(image\/[^;]+)(;base64)?,(.*)$/i.exec(dataUrl);
+    if (!match) return null;
+
+    const mimeType = match[1];
+    const isBase64 = !!match[2];
+    const data = match[3];
+    const byteString = isBase64 ? atob(data) : decodeURIComponent(data);
+    const buffer = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i += 1) {
+      buffer[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([buffer], { type: mimeType });
+  }
+
+  function resolveBackgroundImageUrl(url) {
+    const imageUrl = typeof url === 'string' ? url.trim() : '';
+    if (!imageUrl) {
+      revokeCurrentBackgroundBlobUrl();
+      return '';
+    }
+
+    if (imageUrl.startsWith('data:image/')) {
+      if (imageUrl === currentBackgroundSource && currentBackgroundBlobUrl) {
+        return currentBackgroundBlobUrl;
+      }
+
+      const blob = dataUrlToBlob(imageUrl);
+      if (!blob) {
+        revokeCurrentBackgroundBlobUrl();
+        return imageUrl;
+      }
+
+      revokeCurrentBackgroundBlobUrl();
+      currentBackgroundBlobUrl = URL.createObjectURL(blob);
+      currentBackgroundSource = imageUrl;
+      return currentBackgroundBlobUrl;
+    }
+
+    if (currentBackgroundBlobUrl) {
+      revokeCurrentBackgroundBlobUrl();
+    }
+
+    currentBackgroundSource = imageUrl;
+    return imageUrl;
+  }
+
   function removeAllThemeClasses() {
     document.documentElement.classList.remove("compass-mode-black");
     if (document.body) {
@@ -39,7 +98,6 @@
   const BACKGROUND_OPACITY_KEY = "backgroundOpacity";
   const BACKGROUND_BLUR_KEY = "backgroundBlur";
   let timetableColorsEnabled = true;
-  let customBackgroundLayer = null;
   const THEME_COLOR_KEYS = {
     bgColor: "compass-theme-bg",
     textColor: "compass-theme-text",
@@ -117,7 +175,7 @@
   }
 
   function applyBackgroundImage(url) {
-    const imageUrl = typeof url === "string" ? url.trim() : "";
+    const imageUrl = resolveBackgroundImageUrl(url);
     const layer = ensureBackgroundLayer();
     if (!layer) return;
 

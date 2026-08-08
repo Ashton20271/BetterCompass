@@ -68,6 +68,11 @@
         color: #f8fafc;
         cursor: pointer;
       }
+      .field-error {
+        color: #f87171;
+        font-size: 12px;
+        min-height: 16px;
+      }
       .field input[type="file"] {
         padding: 0;
         height: auto;
@@ -163,6 +168,7 @@
         <input id="backgroundBlur" type="range" min="0" max="32" step="1" value="8">
         <button id="clearBackground" class="off" type="button">Clear background</button>
         <img id="backgroundPreview" class="background-preview" alt="Background preview" loading="lazy">
+        <div id="backgroundImageError" class="field-error" aria-live="polite"></div>
       </div>
       <div class="field">
         <label for="bgColor">Page background <input id="bgColor" type="color"></label>

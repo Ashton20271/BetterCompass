@@ -5,6 +5,8 @@ const BLOCK_TRACKERS_KEY = "compass-block-trackers-enabled";
 const BACKGROUND_IMAGE_KEY = "backgroundImage";
 const BACKGROUND_OPACITY_KEY = "backgroundOpacity";
 const BACKGROUND_BLUR_KEY = "backgroundBlur";
+const extensionStorageAvailable = typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local;
+const extensionTabsAvailable = typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query && chrome.tabs.sendMessage;
 const THEME_PAGE_KEYS = {
   bgColor: "compass-theme-bg",
   textColor: "compass-theme-text",
@@ -40,6 +42,7 @@ function resetThemeColors() {
 }
 
 function notifyPage(message) {
+  if (!extensionTabsAvailable) return;
   chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     if (!tabs || !tabs.length) return;
     const tab = tabs[0];
@@ -94,10 +97,14 @@ function importSettingsFile(file, refreshCallback) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const extensionStorageAvailable = typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local;
+
   const themeSelect = document.getElementById('themeSelect');
   if (themeSelect) {
     themeSelect.addEventListener('change', () => {
-      setTheme(themeSelect.value);
+      if (extensionStorageAvailable) {
+        setTheme(themeSelect.value);
+      }
       window.close();
     });
   }
@@ -113,6 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const backgroundBlurValue = document.getElementById('backgroundBlurValue');
   const clearBackgroundButton = document.getElementById('clearBackground');
   const backgroundPreview = document.getElementById('backgroundPreview');
+  const backgroundImageError = document.getElementById('backgroundImageError');
   const importButton = document.getElementById('importSettings');
   const exportButton = document.getElementById('exportSettings');
   const importFileInput = document.getElementById('importFile');
@@ -132,6 +140,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const resetButton = document.getElementById('resetTheme');
 
   function refreshUiFromStorage() {
+    if (!extensionStorageAvailable) {
+      return;
+    }
+
     chrome.storage.local.get({
       [AUTO_LOGIN_KEY]: true,
       [TIMETABLE_COLORS_KEY]: true,
@@ -142,13 +154,13 @@ document.addEventListener("DOMContentLoaded", () => {
       [BACKGROUND_BLUR_KEY]: 8,
       ...Object.fromEntries(Object.values(THEME_PAGE_KEYS).map(k => [k, ''])),
     }, result => {
-      autoLoginEl.checked = !!result[AUTO_LOGIN_KEY];
-      timetableEl.checked = !!result[TIMETABLE_COLORS_KEY];
-      blockTrackersEl.checked = !!result[BLOCK_TRACKERS_KEY];
+      if (autoLoginEl) autoLoginEl.checked = !!result[AUTO_LOGIN_KEY];
+      if (timetableEl) timetableEl.checked = !!result[TIMETABLE_COLORS_KEY];
+      if (blockTrackersEl) blockTrackersEl.checked = !!result[BLOCK_TRACKERS_KEY];
       if (themeSelect) {
         themeSelect.value = result[MODE_KEY] || 'off';
       }
-        if (backgroundImageInput) {
+      if (backgroundImageInput) {
         backgroundImageInput.value = result[BACKGROUND_IMAGE_KEY] || '';
       }
       if (backgroundOpacitySlider) {
@@ -174,19 +186,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   refreshUiFromStorage();
 
-  autoLoginEl.addEventListener('change', () => {
-    chrome.storage.local.set({ [AUTO_LOGIN_KEY]: !!autoLoginEl.checked });
-  });
-
-  timetableEl.addEventListener('change', () => {
-    chrome.storage.local.set({ [TIMETABLE_COLORS_KEY]: !!timetableEl.checked }, () => {
-      notifyPage({ action: 'refreshTimetableColors' });
+  if (extensionStorageAvailable && autoLoginEl) {
+    autoLoginEl.addEventListener('change', () => {
+      chrome.storage.local.set({ [AUTO_LOGIN_KEY]: !!autoLoginEl.checked });
     });
-  });
+  }
 
-  blockTrackersEl.addEventListener('change', () => {
-    chrome.storage.local.set({ [BLOCK_TRACKERS_KEY]: !!blockTrackersEl.checked });
-  });
+  if (extensionStorageAvailable && timetableEl) {
+    timetableEl.addEventListener('change', () => {
+      chrome.storage.local.set({ [TIMETABLE_COLORS_KEY]: !!timetableEl.checked }, () => {
+        notifyPage({ action: 'refreshTimetableColors' });
+      });
+    });
+  }
+
+  if (extensionStorageAvailable && blockTrackersEl) {
+    blockTrackersEl.addEventListener('change', () => {
+      chrome.storage.local.set({ [BLOCK_TRACKERS_KEY]: !!blockTrackersEl.checked });
+    });
+  }
 
   Object.entries(colorInputs).forEach(([inputKey, input]) => {
     input.addEventListener('input', () => {
@@ -194,12 +212,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  resetButton.addEventListener('click', () => {
-    resetThemeColors();
-    Object.values(colorInputs).forEach(input => {
-      input.value = '#000000';
+  if (resetButton) {
+    resetButton.addEventListener('click', () => {
+      resetThemeColors();
+      Object.values(colorInputs).forEach(input => {
+        if (input) input.value = '#000000';
+      });
     });
-  });
+  }
+
+  function setBackgroundImageError(message) {
+    if (!backgroundImageError) return;
+    backgroundImageError.textContent = message || '';
+  }
 
   function updateBackgroundPreview(url) {
     if (!backgroundPreview) return;
@@ -208,17 +233,27 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!imageUrl) {
       backgroundPreview.removeAttribute('src');
       backgroundPreview.style.display = 'none';
+      setBackgroundImageError('');
       return;
     }
 
     backgroundPreview.src = imageUrl;
     backgroundPreview.style.display = 'block';
+    setBackgroundImageError('');
+  }
+
+  if (backgroundPreview) {
+    backgroundPreview.addEventListener('error', () => {
+      setBackgroundImageError('Unable to load preview image. Please try a different file or URL.');
+      backgroundPreview.style.display = 'none';
+    });
   }
 
   function isSupportedBackgroundUrl(value) {
     if (!value) return false;
     if (/^data:image\//i.test(value)) return true;
     if (/^blob:/i.test(value)) return true;
+    if (/^chrome-extension:/i.test(value)) return true;
 
     try {
       const parsed = new URL(value);
@@ -243,9 +278,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const value = parseInt(event.target.value, 10);
       const opacity = Number.isNaN(value) ? 75 : value;
       updateBackgroundOpacityLabel(opacity);
-      chrome.storage.local.set({ [BACKGROUND_OPACITY_KEY]: opacity }, () => {
-        notifyPage({ action: 'applyBackgroundImage' });
-      });
+      if (extensionStorageAvailable) {
+        chrome.storage.local.set({ [BACKGROUND_OPACITY_KEY]: opacity }, () => {
+          notifyPage({ action: 'applyBackgroundImage' });
+        });
+      }
     });
   }
 
@@ -254,9 +291,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const value = parseInt(event.target.value, 10);
       const blur = Number.isNaN(value) ? 8 : value;
       updateBackgroundBlurLabel(blur);
-      chrome.storage.local.set({ [BACKGROUND_BLUR_KEY]: blur }, () => {
-        notifyPage({ action: 'applyBackgroundBlur' });
-      });
+      if (extensionStorageAvailable) {
+        chrome.storage.local.set({ [BACKGROUND_BLUR_KEY]: blur }, () => {
+          notifyPage({ action: 'applyBackgroundBlur' });
+        });
+      }
     });
   }
 
@@ -266,17 +305,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (url && !isSupportedBackgroundUrl(url)) {
         updateBackgroundPreview('');
+        setBackgroundImageError('Enter a valid image URL or upload a local image.');
         return;
       }
 
-      if (url) {
-        chrome.storage.local.set({ [BACKGROUND_IMAGE_KEY]: url }, () => {
-          notifyPage({ action: 'applyBackgroundImage' });
-        });
-      } else {
-        chrome.storage.local.remove(BACKGROUND_IMAGE_KEY, () => {
-          notifyPage({ action: 'applyBackgroundImage' });
-        });
+      setBackgroundImageError('');
+      if (extensionStorageAvailable) {
+        if (url) {
+          chrome.storage.local.set({ [BACKGROUND_IMAGE_KEY]: url }, () => {
+            notifyPage({ action: 'applyBackgroundImage' });
+          });
+        } else {
+          chrome.storage.local.remove(BACKGROUND_IMAGE_KEY, () => {
+            notifyPage({ action: 'applyBackgroundImage' });
+          });
+        }
       }
 
       updateBackgroundPreview(url);
@@ -291,15 +334,21 @@ document.addEventListener("DOMContentLoaded", () => {
       const reader = new FileReader();
       reader.onload = () => {
         const dataUrl = typeof reader.result === 'string' ? reader.result : '';
-        if (!dataUrl) return;
+        if (!dataUrl) {
+          setBackgroundImageError('Failed to read the selected image file.');
+          return;
+        }
 
         if (backgroundImageInput) {
           backgroundImageInput.value = '';
         }
 
-        chrome.storage.local.set({ [BACKGROUND_IMAGE_KEY]: dataUrl }, () => {
-          notifyPage({ action: 'applyBackgroundImage' });
-        });
+        setBackgroundImageError('');
+        if (extensionStorageAvailable) {
+          chrome.storage.local.set({ [BACKGROUND_IMAGE_KEY]: dataUrl }, () => {
+            notifyPage({ action: 'applyBackgroundImage' });
+          });
+        }
 
         updateBackgroundPreview(dataUrl);
       };
@@ -315,9 +364,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (backgroundFileInput) {
         backgroundFileInput.value = '';
       }
-      chrome.storage.local.remove(BACKGROUND_IMAGE_KEY, () => {
-        notifyPage({ action: 'applyBackgroundImage' });
-      });
+      if (extensionStorageAvailable) {
+        chrome.storage.local.remove(BACKGROUND_IMAGE_KEY, () => {
+          notifyPage({ action: 'applyBackgroundImage' });
+        });
+      }
       updateBackgroundPreview('');
     });
   }
