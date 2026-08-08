@@ -35,7 +35,6 @@
   }
 
   const TIMETABLE_COLORS_KEY = "compass-timetable-colors-enabled";
-  const TIMETABLE_DISABLED_COLOR = "lightblue";
   const BACKGROUND_IMAGE_KEY = "backgroundImage";
   const BACKGROUND_OPACITY_KEY = "backgroundOpacity";
   const BACKGROUND_BLUR_KEY = "backgroundBlur";
@@ -196,8 +195,6 @@
         const color = key && localStorage.getItem(key);
         if (isActive() && color && timetableColorsEnabled) {
           el.style.backgroundColor = color;
-        } else if (isActive() && !timetableColorsEnabled) {
-          el.style.backgroundColor = TIMETABLE_DISABLED_COLOR;
         } else {
           el.style.backgroundColor = "";
         }
@@ -330,16 +327,18 @@
 
   picker.innerHTML = `
     <div id="preview" style="height:16px;margin-bottom:4px;border-radius:3px;"></div>
-    Hue <input id="h" type="range" min="0" max="360">
-    Sat <input id="s" type="range" min="0" max="100">
-    Light <input id="l" type="range" min="0" max="100">
+    R <input id="r" type="range" min="0" max="255">
+    G <input id="g" type="range" min="0" max="255">
+    B <input id="b" type="range" min="0" max="255">
+    HEX <input id="hex" type="text" maxlength="7" style="width:100%;margin-top:4px;box-sizing:border-box;">
   `;
 
   document.body.appendChild(picker);
 
-  const h = picker.querySelector("#h");
-  const s = picker.querySelector("#s");
-  const l = picker.querySelector("#l");
+  const r = picker.querySelector("#r");
+  const g = picker.querySelector("#g");
+  const b = picker.querySelector("#b");
+  const hex = picker.querySelector("#hex");
   const preview = picker.querySelector("#preview");
 
   let currentBlock = null;
@@ -359,8 +358,62 @@
     return key;
   }
 
-  function hsl() {
-    return `hsl(${h.value},${s.value}%,${l.value}%)`;
+  function rgb() {
+    return `rgb(${r.value},${g.value},${b.value})`;
+  }
+
+  function componentToHex(value) {
+    const hexValue = Number(value).toString(16);
+    return hexValue.length === 1 ? `0${hexValue}` : hexValue;
+  }
+
+  function rgbToHex({ r, g, b }) {
+    return `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`;
+  }
+
+  function parseHexColor(value) {
+    if (typeof value !== "string") return null;
+    const normalized = value.trim().replace(/^#/, "");
+    if (!/^[0-9a-fA-F]{3}$/.test(normalized) && !/^[0-9a-fA-F]{6}$/.test(normalized)) {
+      return null;
+    }
+
+    const hex = normalized.length === 3
+      ? normalized.split("").map(ch => ch + ch).join("")
+      : normalized;
+
+    return {
+      r: parseInt(hex.slice(0, 2), 16),
+      g: parseInt(hex.slice(2, 4), 16),
+      b: parseInt(hex.slice(4, 6), 16),
+    };
+  }
+
+  function getRgbFromCssColor(color) {
+    if (!color) return null;
+
+    const temp = document.createElement("div");
+    temp.style.color = color;
+    document.body.appendChild(temp);
+    const computed = getComputedStyle(temp).color;
+    document.body.removeChild(temp);
+
+    const match = computed.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (!match) return null;
+
+    return {
+      r: Number(match[1]),
+      g: Number(match[2]),
+      b: Number(match[3]),
+    };
+  }
+
+  function setPickerValues(values) {
+    if (!values) return;
+    r.value = values.r;
+    g.value = values.g;
+    b.value = values.b;
+    hex.value = rgbToHex(values);
   }
 
   function applyColor() {
@@ -368,26 +421,33 @@
     const key = getKey(currentBlock);
     if (!key) return;
 
-    const color = hsl();
+    const color = rgb();
     currentBlock.style.backgroundColor = color;
     preview.style.background = color;
+    hex.value = rgbToHex({ r: Number(r.value), g: Number(g.value), b: Number(b.value) });
     localStorage.setItem(key, color);
   }
 
   function show(block) {
     currentBlock = block;
 
-    const r = block.getBoundingClientRect();
-    picker.style.top = r.top + window.scrollY + "px";
-    picker.style.left = r.right + window.scrollX + 6 + "px";
+    const rect = block.getBoundingClientRect();
+    picker.style.top = rect.top + window.scrollY + "px";
+    picker.style.left = rect.right + window.scrollX + 6 + "px";
     picker.style.display = "block";
 
     const key = getKey(block);
     const saved = key && localStorage.getItem(key);
 
     if (saved) {
-      const m = saved.match(/\d+/g);
-      if (m) [h.value, s.value, l.value] = m;
+      const rgbValues = getRgbFromCssColor(saved) || parseHexColor(saved);
+      if (rgbValues) {
+        setPickerValues(rgbValues);
+      } else {
+        setPickerValues({ r: 128, g: 128, b: 128 });
+      }
+    } else {
+      setPickerValues({ r: 128, g: 128, b: 128 });
     }
 
     applyColor();
@@ -403,14 +463,21 @@
     const block = e.target.closest(
       '[class*="timetable"],[class*="calendar"],.event'
     );
-    if (!block) return;
+    if (!block || !timetableColorsEnabled) return;
 
     e.preventDefault();
     pinnedBlock = block;
     show(block);
   });
 
-  [h, s, l].forEach(x => x.addEventListener("input", applyColor));
+  [r, g, b].forEach(x => x.addEventListener("input", applyColor));
+
+  hex.addEventListener("input", () => {
+    const parsed = parseHexColor(hex.value);
+    if (!parsed) return;
+    setPickerValues(parsed);
+    applyColor();
+  });
 
   document.addEventListener(
     "pointerdown",
