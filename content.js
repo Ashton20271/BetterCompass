@@ -344,17 +344,54 @@
   let currentBlock = null;
   let pinnedBlock = null;
 
+  function normalizeSubjectText(text) {
+    if (!text) return null;
+
+    const cleanLine = line => {
+      let result = line.replace(/\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/gi, "");
+      result = result.replace(/\b\d{1,2}:\d{2}\b/g, "");
+      result = result.replace(/\b(?:AM|PM)\b/gi, "");
+      result = result.replace(/^[\s\-–—|:]+/, "");
+      result = result.replace(/\s+/g, " ").trim();
+      return result || null;
+    };
+
+    const lines = text
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean);
+
+    for (const line of lines) {
+      const normalized = cleanLine(line);
+      if (normalized) return normalized;
+    }
+
+    return cleanLine(text.trim());
+  }
+
+  function getSubjectText(el) {
+    if (!el) return null;
+
+    const ariaLabel = el.getAttribute("aria-label") || "";
+    const dataId = el.getAttribute("data-id") || "";
+    const content = el.textContent || "";
+
+    return (
+      normalizeSubjectText(ariaLabel) ||
+      normalizeSubjectText(dataId) ||
+      normalizeSubjectText(content)
+    );
+  }
+
   function getKey(el) {
     if (!el) return null;
-    if (el.dataset.colorKey) return el.dataset.colorKey;
 
-    const key =
-      "evt|" +
-      (el.getAttribute("data-id") ||
-        el.getAttribute("aria-label") ||
-        el.textContent.replace(/\s+/g, " ").trim().slice(0, 80));
+    const subject = getSubjectText(el);
+    const key = subject ? `subject|${subject}` : null;
 
-    el.dataset.colorKey = key;
+    if (key) {
+      el.dataset.colorKey = key;
+    }
     return key;
   }
 
@@ -426,6 +463,7 @@
     preview.style.background = color;
     hex.value = rgbToHex({ r: Number(r.value), g: Number(g.value), b: Number(b.value) });
     localStorage.setItem(key, color);
+    restore();
   }
 
   function show(block) {
