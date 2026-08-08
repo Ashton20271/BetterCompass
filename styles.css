@@ -208,7 +208,7 @@ body[class*="theme-"] :is(.DayViewEvent-event, .EventTile-root, .CalendarEvent) 
   border-left: 4px solid var(--accent) !important;
 }
 
-.theme-clear {
+.theme-Transparent {
   --bg: transparent;
   --text: #000407;
   --card: transparent;
