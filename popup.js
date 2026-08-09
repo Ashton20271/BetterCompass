@@ -19,6 +19,24 @@ const THEME_PAGE_KEYS = {
   linkColor: "compass-theme-link",
   borderColor: "compass-theme-border",
   accentColor: "compass-theme-accent",
+  fontUrl: "compass-theme-font-url",
+  fontFamily: "compass-theme-font-family",
+};
+
+const DEFAULT_THEME_VALUES = {
+  bgColor: '#000000',
+  textColor: '#000000',
+  headerColor: '#000000',
+  headerTextColor: '#000000',
+  cardColor: '#000000',
+  cardTextColor: '#000000',
+  buttonColor: '#000000',
+  buttonTextColor: '#000000',
+  linkColor: '#000000',
+  borderColor: '#000000',
+  accentColor: '#000000',
+  fontUrl: '',
+  fontFamily: '',
 };
 
 function setTheme(mode) {
@@ -156,6 +174,8 @@ document.addEventListener("DOMContentLoaded", () => {
     linkColor: document.getElementById('linkColor'),
     borderColor: document.getElementById('borderColor'),
     accentColor: document.getElementById('accentColor'),
+    fontUrl: document.getElementById('fontUrl'),
+    fontFamily: document.getElementById('fontFamily'),
   };
   const resetButton = document.getElementById('resetTheme');
 
@@ -172,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
       [BACKGROUND_IMAGE_KEY]: '',
       [BACKGROUND_OPACITY_KEY]: 75,
       [BACKGROUND_BLUR_KEY]: 8,
-      ...Object.fromEntries(Object.values(THEME_PAGE_KEYS).map(k => [k, ''])),
+      ...Object.fromEntries(Object.entries(THEME_PAGE_KEYS).map(([inputKey, storageKey]) => [storageKey, DEFAULT_THEME_VALUES[inputKey]])),
     }, result => {
       if (autoLoginEl) autoLoginEl.checked = !!result[AUTO_LOGIN_KEY];
       if (timetableEl) timetableEl.checked = !!result[TIMETABLE_COLORS_KEY];
@@ -200,7 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       Object.entries(THEME_PAGE_KEYS).forEach(([inputKey, storageKey]) => {
         if (colorInputs[inputKey]) {
-          colorInputs[inputKey].value = result[storageKey] || '#000000';
+          colorInputs[inputKey].value = result[storageKey] ?? DEFAULT_THEME_VALUES[inputKey];
         }
       });
     });
@@ -237,8 +257,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (resetButton) {
     resetButton.addEventListener('click', () => {
       resetThemeColors();
-      Object.values(colorInputs).forEach(input => {
-        if (input) input.value = '#000000';
+      Object.entries(colorInputs).forEach(([inputKey, input]) => {
+        if (!input) return;
+        input.value = DEFAULT_THEME_VALUES[inputKey] || '';
       });
     });
   }

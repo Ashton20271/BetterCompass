@@ -139,10 +139,30 @@
     linkColor: "compass-theme-link",
     borderColor: "compass-theme-border",
     accentColor: "compass-theme-accent",
+    fontUrl: "compass-theme-font-url",
+    fontFamily: "compass-theme-font-family",
   };
   const themeStyle = document.createElement("style");
   themeStyle.id = "compass-theme-overrides";
   document.head ? document.head.appendChild(themeStyle) : document.documentElement.appendChild(themeStyle);
+
+  function ensureFontLink() {
+    let link = document.getElementById("compass-theme-font-link");
+    if (!link) {
+      link = document.createElement("link");
+      link.id = "compass-theme-font-link";
+      link.rel = "stylesheet";
+      document.head ? document.head.appendChild(link) : document.documentElement.appendChild(link);
+    }
+    return link;
+  }
+
+  function removeFontLink() {
+    const link = document.getElementById("compass-theme-font-link");
+    if (link) {
+      link.remove();
+    }
+  }
 
   function ensureBackgroundLayer() {
     if (customBackgroundLayer && document.body.contains(customBackgroundLayer)) {
@@ -743,6 +763,15 @@
       }
       if (result[THEME_COLOR_KEYS.accentColor]) {
         styles.push(`.MuiChip-root, .MuiBadge-root, .MuiAvatar-root, .MuiIconButton-root, [class*="accent"], [class*="highlight"] { background-color: ${result[THEME_COLOR_KEYS.accentColor]} !important; }`);
+      }
+      if (result[THEME_COLOR_KEYS.fontUrl]) {
+        const fontLink = ensureFontLink();
+        fontLink.href = result[THEME_COLOR_KEYS.fontUrl];
+      } else {
+        removeFontLink();
+      }
+      if (result[THEME_COLOR_KEYS.fontFamily]) {
+        styles.push(`html, body, body * { font-family: ${result[THEME_COLOR_KEYS.fontFamily]} !important; }`);
       }
       themeStyle.textContent = styles.join("\n");
     });
