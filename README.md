@@ -3,3 +3,5 @@ an extension to add new features to the compass website (compass.education) such
 https://chrome.google.com/webstore/detail/iecjhnfeefcfmafmddeognddfaeckggn
 
 https://microsoftedge.microsoft.com/addons/detail/better-compass/oppncljcbbalojehefglankgfnoffgen
+
+![Discord](https://img.shields.io/discord/1468532500828524587)
