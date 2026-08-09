@@ -6,6 +6,9 @@ const BLOCK_TRACKERS_KEY = "compass-block-trackers-enabled";
 const BACKGROUND_IMAGE_KEY = "backgroundImage";
 const BACKGROUND_OPACITY_KEY = "backgroundOpacity";
 const BACKGROUND_BLUR_KEY = "backgroundBlur";
+const BACKGROUND_MUSIC_URL_KEY = "compass-background-music-url";
+const BACKGROUND_MUSIC_FILE_KEY = "compass-background-music-file";
+const BACKGROUND_MUSIC_ENABLED_KEY = "compass-background-music-enabled";
 const extensionStorageAvailable = typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local;
 const extensionTabsAvailable = typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query && chrome.tabs.sendMessage;
 const THEME_PAGE_KEYS = {
@@ -159,6 +162,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearBackgroundButton = document.getElementById('clearBackground');
   const backgroundPreview = document.getElementById('backgroundPreview');
   const backgroundImageError = document.getElementById('backgroundImageError');
+  const backgroundMusicUrlInput = document.getElementById('backgroundMusicUrl');
+  const backgroundMusicFileInput = document.getElementById('backgroundMusicFile');
+  const musicEnabledEl = document.getElementById('musicEnabled');
   let currentBackgroundPreviewUrl = null;
   const importButton = document.getElementById('importSettings');
   const exportButton = document.getElementById('exportSettings');
@@ -194,6 +200,9 @@ document.addEventListener("DOMContentLoaded", () => {
       [BACKGROUND_OPACITY_KEY]: 75,
       [BACKGROUND_BLUR_KEY]: 8,
       [ANIMATIONS_ENABLED_KEY]: true,
+      [BACKGROUND_MUSIC_URL_KEY]: '',
+      [BACKGROUND_MUSIC_FILE_KEY]: null,
+      [BACKGROUND_MUSIC_ENABLED_KEY]: false,
       ...Object.fromEntries(Object.entries(THEME_PAGE_KEYS).map(([inputKey, storageKey]) => [storageKey, DEFAULT_THEME_VALUES[inputKey]])),
     }, result => {
       if (autoLoginEl) autoLoginEl.checked = !!result[AUTO_LOGIN_KEY];
@@ -202,6 +211,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const animationsEnabledEl = document.getElementById('animationsEnabled');
       if (animationsEnabledEl) {
         animationsEnabledEl.checked = result[ANIMATIONS_ENABLED_KEY] !== false;
+      }
+      if (backgroundMusicUrlInput) {
+        backgroundMusicUrlInput.value = result[BACKGROUND_MUSIC_URL_KEY] || '';
+      }
+      if (backgroundMusicFileInput) {
+        backgroundMusicFileInput.value = '';
+      }
+      if (musicEnabledEl) {
+        musicEnabledEl.checked = !!result[BACKGROUND_MUSIC_ENABLED_KEY];
       }
 
       if (themeSelect) {
@@ -265,6 +283,52 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const animationsEnabledEl = document.getElementById('animationsEnabled');
+  if (extensionStorageAvailable && backgroundMusicUrlInput) {
+    backgroundMusicUrlInput.addEventListener('input', () => {
+      const url = backgroundMusicUrlInput.value.trim();
+      chrome.storage.local.set({ [BACKGROUND_MUSIC_URL_KEY]: url }, () => {
+        notifyPage({ action: 'applyBackgroundMusic' });
+      });
+    });
+  }
+
+  if (extensionStorageAvailable && backgroundMusicFileInput) {
+    backgroundMusicFileInput.addEventListener('change', event => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (!file.type || !file.type.startsWith('audio/')) {
+        alert('Please choose a valid audio file.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const arrayBuffer = reader.result;
+        if (!(arrayBuffer instanceof ArrayBuffer)) {
+          alert('Unable to read the selected audio file.');
+          return;
+        }
+        const bytes = Array.from(new Uint8Array(arrayBuffer));
+        const fileValue = { type: file.type || 'audio/mpeg', data: bytes };
+        chrome.storage.local.set({ [BACKGROUND_MUSIC_FILE_KEY]: fileValue, [BACKGROUND_MUSIC_URL_KEY]: '' }, () => {
+          notifyPage({ action: 'applyBackgroundMusic' });
+        });
+      };
+      reader.onerror = () => {
+        alert('Unable to read the selected audio file.');
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  if (extensionStorageAvailable && musicEnabledEl) {
+    musicEnabledEl.addEventListener('change', () => {
+      chrome.storage.local.set({ [BACKGROUND_MUSIC_ENABLED_KEY]: !!musicEnabledEl.checked }, () => {
+        notifyPage({ action: 'applyBackgroundMusic' });
+      });
+    });
+  }
+
   if (extensionStorageAvailable && animationsEnabledEl) {
     animationsEnabledEl.addEventListener('change', () => {
       chrome.storage.local.set({ [ANIMATIONS_ENABLED_KEY]: !!animationsEnabledEl.checked }, () => {
@@ -298,6 +362,21 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       const bytes = Array.from(new Uint8Array(arrayBuffer));
       callback({ type: file.type || 'image/png', data: bytes });
+    };
+    reader.onerror = () => callback(null);
+    reader.readAsArrayBuffer(file);
+  }
+
+  function getAudioStorageValue(file, callback) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const arrayBuffer = reader.result;
+      if (!(arrayBuffer instanceof ArrayBuffer)) {
+        callback(null);
+        return;
+      }
+      const bytes = Array.from(new Uint8Array(arrayBuffer));
+      callback({ type: file.type || 'audio/mpeg', data: bytes });
     };
     reader.onerror = () => callback(null);
     reader.readAsArrayBuffer(file);

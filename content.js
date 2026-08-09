@@ -127,7 +127,14 @@
   const BACKGROUND_IMAGE_KEY = "backgroundImage";
   const BACKGROUND_OPACITY_KEY = "backgroundOpacity";
   const BACKGROUND_BLUR_KEY = "backgroundBlur";
+  const BACKGROUND_MUSIC_URL_KEY = "compass-background-music-url";
+  const BACKGROUND_MUSIC_FILE_KEY = "compass-background-music-file";
+  const BACKGROUND_MUSIC_ENABLED_KEY = "compass-background-music-enabled";
   let timetableColorsEnabled = true;
+  let backgroundMusicAudio = null;
+  let backgroundMusicDesiredSrc = '';
+  let backgroundMusicDesiredEnabled = false;
+  let currentBackgroundMusicBlobUrl = null;
   const THEME_COLOR_KEYS = {
     bgColor: "compass-theme-bg",
     textColor: "compass-theme-text",
@@ -270,6 +277,138 @@
     );
   }
 
+  function revokeCurrentBackgroundMusicBlobUrl() {
+    if (currentBackgroundMusicBlobUrl) {
+      URL.revokeObjectURL(currentBackgroundMusicBlobUrl);
+      currentBackgroundMusicBlobUrl = null;
+    }
+  }
+
+  function resolveBackgroundMusicSrc(value) {
+    const storageBlob = backgroundStorageValueToBlob(value);
+    if (storageBlob) {
+      revokeCurrentBackgroundMusicBlobUrl();
+      currentBackgroundMusicBlobUrl = URL.createObjectURL(storageBlob);
+      return currentBackgroundMusicBlobUrl;
+    }
+    return typeof value === 'string' ? value.trim() : '';
+  }
+
+  function ensureBackgroundMusicAudio() {
+    if (backgroundMusicAudio && (document.body && document.body.contains(backgroundMusicAudio) || document.documentElement.contains(backgroundMusicAudio))) {
+      return backgroundMusicAudio;
+    }
+
+    const root = document.body || document.documentElement;
+    if (!root) {
+      return null;
+    }
+
+    backgroundMusicAudio = document.createElement("audio");
+    backgroundMusicAudio.id = "betterCompassBackgroundMusic";
+    backgroundMusicAudio.loop = true;
+    backgroundMusicAudio.autoplay = true;
+    backgroundMusicAudio.preload = "auto";
+    backgroundMusicAudio.style.display = "none";
+    backgroundMusicAudio.volume = 0.18;
+    backgroundMusicAudio.muted = false;
+    backgroundMusicAudio.setAttribute("aria-hidden", "true");
+    root.appendChild(backgroundMusicAudio);
+    return backgroundMusicAudio;
+  }
+
+  function removeBackgroundMusic() {
+    if (!backgroundMusicAudio) {
+      return;
+    }
+    backgroundMusicAudio.pause();
+    backgroundMusicAudio.removeAttribute("src");
+    backgroundMusicAudio.load();
+    if (backgroundMusicAudio.parentNode) {
+      backgroundMusicAudio.parentNode.removeChild(backgroundMusicAudio);
+    }
+    backgroundMusicAudio = null;
+  }
+
+  function attemptResumeBackgroundMusic() {
+    if (!backgroundMusicAudio || !backgroundMusicDesiredEnabled || !backgroundMusicDesiredSrc) {
+      return;
+    }
+
+    try {
+      if (backgroundMusicAudio.src !== backgroundMusicDesiredSrc) {
+        backgroundMusicAudio.src = backgroundMusicDesiredSrc;
+        backgroundMusicAudio.load();
+      }
+      backgroundMusicAudio.loop = true;
+      backgroundMusicAudio.volume = 0.18;
+      backgroundMusicAudio.play().then(() => {
+        if (backgroundMusicAudio && !backgroundMusicAudio.muted) {
+          return;
+        }
+        if (backgroundMusicAudio) {
+          backgroundMusicAudio.muted = false;
+        }
+      }).catch(() => {
+        if (backgroundMusicAudio) {
+          backgroundMusicAudio.muted = true;
+        }
+      });
+    } catch (error) {
+      if (backgroundMusicAudio) {
+        backgroundMusicAudio.muted = true;
+      }
+    }
+  }
+
+  function applyBackgroundMusic(url, fileValue, enabled) {
+    const source = fileValue && typeof fileValue === 'object' && fileValue.data ? fileValue : (typeof url === 'string' ? url.trim() : '');
+    const resolvedSrc = resolveBackgroundMusicSrc(source);
+    backgroundMusicDesiredSrc = resolvedSrc;
+    backgroundMusicDesiredEnabled = !!enabled && !!resolvedSrc;
+
+    if (!backgroundMusicDesiredEnabled) {
+      removeBackgroundMusic();
+      return;
+    }
+
+    const audio = ensureBackgroundMusicAudio();
+    if (!audio) {
+      return;
+    }
+
+    if (audio.getAttribute('src') !== resolvedSrc) {
+      audio.src = resolvedSrc;
+      audio.load();
+    }
+    audio.loop = true;
+    audio.volume = 0.18;
+    audio.muted = true;
+    attemptResumeBackgroundMusic();
+  }
+
+  function refreshBackgroundMusicFromStorage() {
+    chrome.storage.local.get([BACKGROUND_MUSIC_URL_KEY, BACKGROUND_MUSIC_FILE_KEY, BACKGROUND_MUSIC_ENABLED_KEY], result => {
+      applyBackgroundMusic(result[BACKGROUND_MUSIC_URL_KEY], result[BACKGROUND_MUSIC_FILE_KEY], result[BACKGROUND_MUSIC_ENABLED_KEY]);
+    });
+  }
+
+  function resumeBackgroundMusicAfterInteraction() {
+    if (!backgroundMusicDesiredEnabled || !backgroundMusicDesiredSrc) {
+      return;
+    }
+    if (!backgroundMusicAudio) {
+      attemptResumeBackgroundMusic();
+      return;
+    }
+    if (backgroundMusicAudio.paused || backgroundMusicAudio.muted) {
+      attemptResumeBackgroundMusic();
+    }
+  }
+
+  document.addEventListener('pointerdown', resumeBackgroundMusicAfterInteraction, { capture: true, passive: true });
+  document.addEventListener('keydown', resumeBackgroundMusicAfterInteraction, { capture: true, passive: true });
+
   function resetNewsStyles() {
     document.querySelectorAll(".MuiStack-root").forEach(stack => {
       stack.style.filter = "";
@@ -329,12 +468,13 @@
 
   applyMode(mode);
 
-  chrome.storage.local.get([MODE_KEY, BACKGROUND_IMAGE_KEY, BACKGROUND_OPACITY_KEY, BACKGROUND_BLUR_KEY], result => {
+  chrome.storage.local.get([MODE_KEY, BACKGROUND_IMAGE_KEY, BACKGROUND_OPACITY_KEY, BACKGROUND_BLUR_KEY, BACKGROUND_MUSIC_URL_KEY, BACKGROUND_MUSIC_FILE_KEY, BACKGROUND_MUSIC_ENABLED_KEY], result => {
     const stored = result[MODE_KEY] || mode;
     setMode(stored);
     applyBackgroundOpacity(result[BACKGROUND_OPACITY_KEY]);
     applyBackgroundBlur(result[BACKGROUND_BLUR_KEY]);
     applyBackgroundImage(result[BACKGROUND_IMAGE_KEY]);
+    applyBackgroundMusic(result[BACKGROUND_MUSIC_URL_KEY], result[BACKGROUND_MUSIC_FILE_KEY], result[BACKGROUND_MUSIC_ENABLED_KEY]);
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -356,6 +496,9 @@
     }
     if (changes[BACKGROUND_BLUR_KEY]) {
       applyBackgroundBlur(changes[BACKGROUND_BLUR_KEY].newValue);
+    }
+    if (changes[BACKGROUND_MUSIC_URL_KEY] || changes[BACKGROUND_MUSIC_FILE_KEY] || changes[BACKGROUND_MUSIC_ENABLED_KEY]) {
+      refreshBackgroundMusicFromStorage();
     }
     if (changes["compass-animations-enabled"]) {
       applyCustomTheme();
@@ -383,6 +526,9 @@
         applyBackgroundOpacity(result[BACKGROUND_OPACITY_KEY]);
         applyBackgroundImage(result[BACKGROUND_IMAGE_KEY]);
       });
+    }
+    if (message.action === 'applyBackgroundMusic') {
+      refreshBackgroundMusicFromStorage();
     }
     if (message.action === 'applyBackgroundBlur') {
       chrome.storage.local.get([BACKGROUND_BLUR_KEY], result => {
