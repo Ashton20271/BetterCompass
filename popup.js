@@ -1,6 +1,7 @@
 const MODE_KEY = "compass-mode";
 const AUTO_LOGIN_KEY = "compass-auto-login-enabled";
 const TIMETABLE_COLORS_KEY = "compass-timetable-colors-enabled";
+const ANIMATIONS_ENABLED_KEY = "compass-animations-enabled";
 const BLOCK_TRACKERS_KEY = "compass-block-trackers-enabled";
 const BACKGROUND_IMAGE_KEY = "backgroundImage";
 const BACKGROUND_OPACITY_KEY = "backgroundOpacity";
@@ -192,11 +193,17 @@ document.addEventListener("DOMContentLoaded", () => {
       [BACKGROUND_IMAGE_KEY]: '',
       [BACKGROUND_OPACITY_KEY]: 75,
       [BACKGROUND_BLUR_KEY]: 8,
+      [ANIMATIONS_ENABLED_KEY]: true,
       ...Object.fromEntries(Object.entries(THEME_PAGE_KEYS).map(([inputKey, storageKey]) => [storageKey, DEFAULT_THEME_VALUES[inputKey]])),
     }, result => {
       if (autoLoginEl) autoLoginEl.checked = !!result[AUTO_LOGIN_KEY];
       if (timetableEl) timetableEl.checked = !!result[TIMETABLE_COLORS_KEY];
       if (blockTrackersEl) blockTrackersEl.checked = !!result[BLOCK_TRACKERS_KEY];
+      const animationsEnabledEl = document.getElementById('animationsEnabled');
+      if (animationsEnabledEl) {
+        animationsEnabledEl.checked = result[ANIMATIONS_ENABLED_KEY] !== false;
+      }
+
       if (themeSelect) {
         themeSelect.value = result[MODE_KEY] || 'off';
       }
@@ -253,6 +260,15 @@ document.addEventListener("DOMContentLoaded", () => {
       setThemeColor(inputKey, input.value);
     });
   });
+
+  const animationsEnabledEl = document.getElementById('animationsEnabled');
+  if (extensionStorageAvailable && animationsEnabledEl) {
+    animationsEnabledEl.addEventListener('change', () => {
+      chrome.storage.local.set({ [ANIMATIONS_ENABLED_KEY]: !!animationsEnabledEl.checked }, () => {
+        notifyPage({ action: 'applyCustomTheme' });
+      });
+    });
+  }
 
   if (resetButton) {
     resetButton.addEventListener('click', () => {

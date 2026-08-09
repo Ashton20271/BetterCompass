@@ -123,6 +123,7 @@
   }
 
   const TIMETABLE_COLORS_KEY = "compass-timetable-colors-enabled";
+  const ANIMATIONS_ENABLED_KEY = "compass-animations-enabled";
   const BACKGROUND_IMAGE_KEY = "backgroundImage";
   const BACKGROUND_OPACITY_KEY = "backgroundOpacity";
   const BACKGROUND_BLUR_KEY = "backgroundBlur";
@@ -355,6 +356,9 @@
     }
     if (changes[BACKGROUND_BLUR_KEY]) {
       applyBackgroundBlur(changes[BACKGROUND_BLUR_KEY].newValue);
+    }
+    if (changes["compass-animations-enabled"]) {
+      applyCustomTheme();
     }
     if (Object.values(THEME_COLOR_KEYS).some(key => key in changes)) {
       applyCustomTheme();
@@ -729,7 +733,7 @@
   }
 
   function applyCustomTheme() {
-    chrome.storage.local.get(Object.values(THEME_COLOR_KEYS), result => {
+    chrome.storage.local.get([...Object.values(THEME_COLOR_KEYS), ANIMATIONS_ENABLED_KEY], result => {
       const styles = [];
       if (result[THEME_COLOR_KEYS.bgColor]) {
         styles.push(`html, body, body > div, .MuiPaper-root, .MuiCard-root, .MuiStack-root, .MuiToolbar-root, .MuiAppBar-root, [class*="background"], [class*="bg"] { background-color: ${result[THEME_COLOR_KEYS.bgColor]} !important; }`);
@@ -773,6 +777,13 @@
       if (result[THEME_COLOR_KEYS.fontFamily]) {
         styles.push(`html, body, body * { font-family: ${result[THEME_COLOR_KEYS.fontFamily]} !important; }`);
       }
+
+      const animationsEnabled = result[ANIMATIONS_ENABLED_KEY] !== false;
+      if (document.body) {
+        document.body.classList.toggle('betterCompassAnimationsDisabled', !animationsEnabled);
+      }
+      document.documentElement.classList.toggle('betterCompassAnimationsDisabled', !animationsEnabled);
+
       themeStyle.textContent = styles.join("\n");
     });
   }

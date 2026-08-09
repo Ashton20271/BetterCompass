@@ -218,3 +218,44 @@ body[class*="theme-"] :is(.DayViewEvent-event, .EventTile-root, .CalendarEvent) 
 body.theme-Transparent #productNavBar.newLNF {
   background-color: transparent !important;
 }
+
+@keyframes betterCompassFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+body,
+body * {
+  transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease, opacity 220ms ease;
+}
+
+:is(html, body):not(.betterCompassAnimationsDisabled) :is(.MuiPaper-root, .MuiCard-root, .MuiBox-root, .MuiAccordion-root, .MuiContainer-root, .x-panel-body, .x-calendar-list, .newLNF .home-schoolNameContainer, .css-szig0z .css-dt2n38) {
+  animation: betterCompassFadeUp 340ms ease both;
+  will-change: transform, opacity;
+}
+
+:is(html, body):not(.betterCompassAnimationsDisabled) :is(.MuiButton-root, button, input[type="button"], input[type="submit"], .MuiButtonBase-root, .MuiFab-root) {
+  transition: transform 200ms ease, box-shadow 200ms ease, background-color 200ms ease, color 200ms ease;
+}
+
+:is(html, body):not(.betterCompassAnimationsDisabled) :is(.MuiButton-root, button, input[type="button"], input[type="submit"], .MuiButtonBase-root, .MuiFab-root):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+:is(html, body):not(.betterCompassAnimationsDisabled) :is(.MuiPaper-root, .MuiCard-root, .MuiBox-root, .MuiAccordion-root, .MuiContainer-root, .x-panel-body, .x-calendar-list, .newLNF .home-schoolNameContainer, .css-szig0z .css-dt2n38):hover {
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
