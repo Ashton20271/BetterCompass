@@ -214,3 +214,7 @@ body[class*="theme-"] :is(.DayViewEvent-event, .EventTile-root, .CalendarEvent) 
   --card: transparent;
   --accent: #6040ff;
 }
+
+body.theme-Transparent #productNavBar.newLNF {
+  background-color: transparent !important;
+}
