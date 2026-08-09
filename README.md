@@ -4,4 +4,4 @@ https://chrome.google.com/webstore/detail/iecjhnfeefcfmafmddeognddfaeckggn
 
 https://microsoftedge.microsoft.com/addons/detail/better-compass/oppncljcbbalojehefglankgfnoffgen
 
-![Discord](https://img.shields.io/discord/1468532500828524587)
+[![Discord](https://img.shields.io/discord/1468532500828524587?logo=discord&logoColor=%235865F2&label=Discord)](https://discord.gg/wbDaE6TkRk)
