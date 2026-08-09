@@ -226,9 +226,12 @@ document.addEventListener("DOMContentLoaded", () => {
         updateBackgroundPreview(result[BACKGROUND_IMAGE_KEY]);
       }
       Object.entries(THEME_PAGE_KEYS).forEach(([inputKey, storageKey]) => {
-        if (colorInputs[inputKey]) {
-          colorInputs[inputKey].value = result[storageKey] ?? DEFAULT_THEME_VALUES[inputKey];
-        }
+        const input = colorInputs[inputKey];
+        if (!input || typeof input.value === 'undefined') return;
+
+        const storedValue = result[storageKey];
+        const defaultValue = DEFAULT_THEME_VALUES[inputKey] ?? '';
+        input.value = storedValue != null ? String(storedValue) : defaultValue;
       });
     });
   }
