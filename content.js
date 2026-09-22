@@ -537,10 +537,18 @@
     }
   });
 
-  function fixNews() {
+  function fixNews(root = document) {
     if (mode !== "black") return;
 
-    document.querySelectorAll(".MuiStack-root").forEach(stack => {
+    const stacks = [];
+    if (root.matches && root.matches(".MuiStack-root")) {
+      stacks.push(root);
+    }
+    if (root.querySelectorAll) {
+      stacks.push(...root.querySelectorAll(".MuiStack-root"));
+    }
+
+    stacks.forEach(stack => {
       if (!stack.innerText.includes("News")) return;
 
       stack.style.filter = "none";
@@ -564,18 +572,46 @@
     });
   }
 
-  fixNews();
-  setTimeout(fixNews, 300);
-  setTimeout(fixNews, 1000);
-  setTimeout(fixNews, 2500);
+  let newsFixFrame = null;
+  const pendingNewsFixRoots = new Set();
+  function scheduleNewsFix(root = document) {
+    pendingNewsFixRoots.add(root);
+    if (newsFixFrame !== null) return;
+    newsFixFrame = requestAnimationFrame(() => {
+      newsFixFrame = null;
+      pendingNewsFixRoots.forEach(fixNews);
+      pendingNewsFixRoots.clear();
+    });
+  }
 
-  new MutationObserver(() => fixNews()).observe(document.body, {
+  scheduleNewsFix();
+  setTimeout(scheduleNewsFix, 300);
+  setTimeout(scheduleNewsFix, 1000);
+  setTimeout(scheduleNewsFix, 2500);
+
+  new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType === Node.ELEMENT_NODE) scheduleNewsFix(node);
+      });
+    });
+  }).observe(document.body, {
     childList: true,
     subtree: true,
   });
 
-  const picker = document.createElement("div");
-  picker.style.cssText = `
+  let picker = null;
+  let r = null;
+  let g = null;
+  let b = null;
+  let hex = null;
+  let preview = null;
+
+  function ensurePicker() {
+    if (picker) return;
+
+    picker = document.createElement("div");
+    picker.style.cssText = `
     position:absolute;
     z-index:99999;
     background:rgba(20,20,20,.95);
@@ -587,7 +623,7 @@
     display:none;
   `;
 
-  picker.innerHTML = `
+    picker.innerHTML = `
     <div id="preview" style="height:16px;margin-bottom:4px;border-radius:3px;"></div>
     R <input id="r" type="range" min="0" max="255">
     G <input id="g" type="range" min="0" max="255">
@@ -595,13 +631,23 @@
     HEX <input id="hex" type="text" maxlength="7" style="width:100%;margin-top:4px;box-sizing:border-box;">
   `;
 
-  document.body.appendChild(picker);
+    document.body.appendChild(picker);
 
-  const r = picker.querySelector("#r");
-  const g = picker.querySelector("#g");
-  const b = picker.querySelector("#b");
-  const hex = picker.querySelector("#hex");
-  const preview = picker.querySelector("#preview");
+    r = picker.querySelector("#r");
+    g = picker.querySelector("#g");
+    b = picker.querySelector("#b");
+    hex = picker.querySelector("#hex");
+    preview = picker.querySelector("#preview");
+
+    [r, g, b].forEach(x => x.addEventListener("input", applyColor));
+    hex.addEventListener("input", () => {
+      const parsed = parseHexColor(hex.value);
+      if (!parsed) return;
+      setPickerValues(parsed);
+      applyColor();
+    });
+    picker.addEventListener("pointerdown", e => e.stopPropagation());
+  }
 
   let currentBlock = null;
   let pinnedBlock = null;
@@ -729,6 +775,7 @@
   }
 
   function show(block) {
+    ensurePicker();
     currentBlock = block;
 
     const rect = block.getBoundingClientRect();
@@ -770,19 +817,10 @@
     show(block);
   });
 
-  [r, g, b].forEach(x => x.addEventListener("input", applyColor));
-
-  hex.addEventListener("input", () => {
-    const parsed = parseHexColor(hex.value);
-    if (!parsed) return;
-    setPickerValues(parsed);
-    applyColor();
-  });
-
   document.addEventListener(
     "pointerdown",
     e => {
-      if (picker.style.display === "none") return;
+      if (!picker || picker.style.display === "none") return;
       if (picker.contains(e.target)) return;
 
       const block = e.target.closest(
@@ -794,8 +832,6 @@
     },
     true
   );
-
-  picker.addEventListener("pointerdown", e => e.stopPropagation());
 
   restore();
   window.addEventListener("load", () => restore());
