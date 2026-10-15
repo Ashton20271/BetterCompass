@@ -124,6 +124,7 @@
 
   const TIMETABLE_COLORS_KEY = "compass-timetable-colors-enabled";
   const ANIMATIONS_ENABLED_KEY = "compass-animations-enabled";
+  const HIDE_SCHOOL_BANNER_KEY = "compass-hide-school-banner-enabled";
   const BACKGROUND_IMAGE_KEY = "backgroundImage";
   const BACKGROUND_OPACITY_KEY = "backgroundOpacity";
   const BACKGROUND_BLUR_KEY = "backgroundBlur";
@@ -468,9 +469,10 @@
 
   applyMode(mode);
 
-  chrome.storage.local.get([MODE_KEY, BACKGROUND_IMAGE_KEY, BACKGROUND_OPACITY_KEY, BACKGROUND_BLUR_KEY, BACKGROUND_MUSIC_URL_KEY, BACKGROUND_MUSIC_FILE_KEY, BACKGROUND_MUSIC_ENABLED_KEY], result => {
+  chrome.storage.local.get([MODE_KEY, BACKGROUND_IMAGE_KEY, BACKGROUND_OPACITY_KEY, BACKGROUND_BLUR_KEY, BACKGROUND_MUSIC_URL_KEY, BACKGROUND_MUSIC_FILE_KEY, BACKGROUND_MUSIC_ENABLED_KEY, HIDE_SCHOOL_BANNER_KEY], result => {
     const stored = result[MODE_KEY] || mode;
     setMode(stored);
+    document.documentElement.classList.toggle("betterCompassHideSchoolBanner", result[HIDE_SCHOOL_BANNER_KEY] === true);
     applyBackgroundOpacity(result[BACKGROUND_OPACITY_KEY]);
     applyBackgroundBlur(result[BACKGROUND_BLUR_KEY]);
     applyBackgroundImage(result[BACKGROUND_IMAGE_KEY]);
@@ -487,6 +489,9 @@
     }
     if (changes["compass-timetable-colors-enabled"]) {
       updateTimetableColorsEnabled(!!changes["compass-timetable-colors-enabled"].newValue);
+    }
+    if (changes[HIDE_SCHOOL_BANNER_KEY]) {
+      document.documentElement.classList.toggle("betterCompassHideSchoolBanner", changes[HIDE_SCHOOL_BANNER_KEY].newValue === true);
     }
     if (changes[BACKGROUND_IMAGE_KEY]) {
       applyBackgroundImage(changes[BACKGROUND_IMAGE_KEY].newValue);

@@ -3,6 +3,7 @@ const AUTO_LOGIN_KEY = "compass-auto-login-enabled";
 const TIMETABLE_COLORS_KEY = "compass-timetable-colors-enabled";
 const ANIMATIONS_ENABLED_KEY = "compass-animations-enabled";
 const BLOCK_TRACKERS_KEY = "compass-block-trackers-enabled";
+const HIDE_SCHOOL_BANNER_KEY = "compass-hide-school-banner-enabled";
 const BACKGROUND_IMAGE_KEY = "backgroundImage";
 const BACKGROUND_OPACITY_KEY = "backgroundOpacity";
 const BACKGROUND_BLUR_KEY = "backgroundBlur";
@@ -152,6 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const autoLoginEl = document.getElementById('autoLogin');
   const timetableEl = document.getElementById('timetableColors');
   const blockTrackersEl = document.getElementById('blockTrackers');
+  const hideSchoolBannerEl = document.getElementById('hideSchoolBanner');
   const backgroundImageInput = document.getElementById('backgroundImage');
   const backgroundFileInput = document.getElementById('backgroundFile');
   const backgroundRow = document.querySelector('.background-row');
@@ -195,6 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
       [AUTO_LOGIN_KEY]: true,
       [TIMETABLE_COLORS_KEY]: true,
       [BLOCK_TRACKERS_KEY]: false,
+      [HIDE_SCHOOL_BANNER_KEY]: false,
       [MODE_KEY]: 'off',
       [BACKGROUND_IMAGE_KEY]: '',
       [BACKGROUND_OPACITY_KEY]: 75,
@@ -208,6 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (autoLoginEl) autoLoginEl.checked = !!result[AUTO_LOGIN_KEY];
       if (timetableEl) timetableEl.checked = !!result[TIMETABLE_COLORS_KEY];
       if (blockTrackersEl) blockTrackersEl.checked = !!result[BLOCK_TRACKERS_KEY];
+      if (hideSchoolBannerEl) hideSchoolBannerEl.checked = !!result[HIDE_SCHOOL_BANNER_KEY];
       const animationsEnabledEl = document.getElementById('animationsEnabled');
       if (animationsEnabledEl) {
         animationsEnabledEl.checked = result[ANIMATIONS_ENABLED_KEY] !== false;
@@ -273,6 +277,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (extensionStorageAvailable && blockTrackersEl) {
     blockTrackersEl.addEventListener('change', () => {
       chrome.storage.local.set({ [BLOCK_TRACKERS_KEY]: !!blockTrackersEl.checked });
+    });
+  }
+
+  if (extensionStorageAvailable && hideSchoolBannerEl) {
+    hideSchoolBannerEl.addEventListener('change', () => {
+      chrome.storage.local.set({ [HIDE_SCHOOL_BANNER_KEY]: !!hideSchoolBannerEl.checked });
     });
   }
 

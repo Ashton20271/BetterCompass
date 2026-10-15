@@ -181,6 +181,14 @@ body.has-custom-background .css-szig0z .css-dt2n38 {
   color: white !important;
 }
 
+html.betterCompassHideSchoolBanner .x-component.home-schoolNameContainer.x-box-item.x-component-default {
+  display: none !important;
+}
+
+html.betterCompassHideSchoolBanner #widget-render-3 {
+  display: none !important;
+}
+
 body.has-custom-background {
   --better-compass-background-blur: 8px;
 }
