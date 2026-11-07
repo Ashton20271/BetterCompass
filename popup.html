@@ -114,7 +114,55 @@
         margin-top: 12px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .toggle-row input[type="checkbox"] {
+        appearance: none;
+        flex: 0 0 36px;
+        width: 36px;
+        height: 20px;
+        margin: 0;
+        border: 1px solid #64748b;
+        border-radius: 999px;
+        background: #334155;
+        cursor: pointer;
+        position: relative;
+        transition: background-color 180ms ease, border-color 180ms ease;
+      }
+      .toggle-row input[type="checkbox"]::before {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #f8fafc;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        transition: transform 180ms ease;
+      }
+      .toggle-row input[type="checkbox"]:checked {
+        border-color: #34d399;
+        background: #059669;
+      }
+      .toggle-row input[type="checkbox"]:checked::before {
+        transform: translateX(16px);
+      }
+      .toggle-row input[type="checkbox"]:focus-visible {
+        outline: 2px solid #60a5fa;
+        outline-offset: 2px;
+      }
+      .toggle-row label {
+        flex: 1;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .toggle-row input[type="checkbox"],
+        .toggle-row input[type="checkbox"]::before {
+          transition: none;
+        }
       }
       .hint {
         margin-top: 12px;
