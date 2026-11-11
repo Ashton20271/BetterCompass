@@ -139,6 +139,10 @@ function importSettingsFile(file, refreshCallback) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const extensionStorageAvailable = typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local;
+  const versionLabel = document.getElementById('extensionVersion');
+  if (versionLabel && chrome.runtime && chrome.runtime.getManifest) {
+    versionLabel.textContent = `v${chrome.runtime.getManifest().version}`;
+  }
 
   const themeSelect = document.getElementById('themeSelect');
   if (themeSelect) {
@@ -253,7 +257,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const storedValue = result[storageKey];
         const defaultValue = DEFAULT_THEME_VALUES[inputKey] ?? '';
-        input.value = storedValue != null ? String(storedValue) : defaultValue;
+        const value = storedValue != null ? String(storedValue) : defaultValue;
+        input.value = input.type === 'color' && !/^#[0-9a-f]{6}$/i.test(value)
+          ? defaultValue
+          : value;
       });
     });
   }
