@@ -853,9 +853,19 @@
   let autoLoginTimeoutId = null;
 
   function tryClickLoginButton() {
-    const loginButton = document.getElementById('SamlLoginButton');
+    const loginButton = document.querySelector(
+      'input[data-test="sso-button"], #roundButton, input.roundButton'
+    );
     if (loginButton) {
       loginButton.click();
+      if (autoLoginTimeoutId) {
+        clearTimeout(autoLoginTimeoutId);
+        autoLoginTimeoutId = null;
+      }
+      if (autoLoginObserver) {
+        autoLoginObserver.disconnect();
+        autoLoginObserver = null;
+      }
       console.log('SAML Sign-in button clicked automatically.');
       return true;
     }
@@ -865,7 +875,7 @@
   function startAutoLogin() {
     if (!autoLoginEnabled) return;
 
-    tryClickLoginButton();
+    if (tryClickLoginButton()) return;
     autoLoginTimeoutId = setTimeout(tryClickLoginButton, 5000);
 
     if (autoLoginObserver) {
